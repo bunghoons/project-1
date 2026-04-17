@@ -3,173 +3,189 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D AI Target Challenge | Powered by Meshy.ai</title>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <title>NEON STRIKE | Advanced 3D Target Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #00f2ff;
       --secondary: #7000ff;
+      --gold: #ffcf33;
       --bg: #050507;
-      --panel: rgba(15, 15, 20, 0.85);
-      --border: rgba(0, 242, 255, 0.3);
+      --panel-bg: rgba(20, 20, 25, 0.7);
+      --border: rgba(0, 242, 255, 0.2);
     }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      margin: 0;
-      padding: 0;
       overflow: hidden;
       background: var(--bg);
       color: #fff;
       font-family: 'Inter', sans-serif;
+      user-select: none;
     }
 
+    #game-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* UI Overlay */
     #ui-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hud {
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .hud.visible { opacity: 1; }
+
+    .stats-group {
+      background: var(--panel-bg);
+      padding: 1rem 2rem;
+      border-radius: 15px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(15px);
+      display: flex;
+      gap: 3rem;
+      pointer-events: auto;
+    }
+
+    .stat { text-align: center; }
+    .stat-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; color: var(--primary); }
+    #combo-value { color: var(--secondary); text-shadow: 0 0 10px var(--secondary); }
+
+    /* Screens */
+    .screen {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 2rem;
-      z-index: 10;
-    }
-
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .game-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.5rem;
-      letter-spacing: 2px;
-      color: var(--primary);
-      text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
-    }
-
-    .stats {
-      background: var(--panel);
-      padding: 1rem 2rem;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      backdrop-filter: blur(10px);
-      display: flex;
-      gap: 2rem;
-      pointer-events: auto;
-    }
-
-    .stat-item {
-      text-align: center;
-    }
-
-    .stat-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      color: #888;
-      margin-bottom: 0.2rem;
-    }
-
-    .stat-value {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.5rem;
-      color: #fff;
-    }
-
-    #game-canvas {
-      width: 100vw;
-      height: 100vh;
-      display: block;
-    }
-
-    .bottom-bar {
-      display: flex;
       justify-content: center;
-      gap: 1rem;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 20;
       pointer-events: auto;
-    }
-
-    button {
-      background: linear-gradient(135deg, var(--secondary), var(--primary));
-      border: none;
-      color: white;
-      padding: 1rem 2.5rem;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: bold;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 20px rgba(112, 0, 255, 0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    button:hover {
-      transform: scale(1.05) translateY(-2px);
-      box-shadow: 0 0 30px rgba(0, 242, 255, 0.6);
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    #message {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2rem;
-      text-align: center;
-      pointer-events: none;
-      opacity: 0;
       transition: opacity 0.5s;
     }
 
-    .overlay {
+    .hidden { opacity: 0; pointer-events: none; }
+
+    .screen h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 4rem;
+      background: linear-gradient(90deg, #fff, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2rem;
+      letter-spacing: 5px;
+    }
+
+    .btn-main {
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
+      border: none;
+      color: white;
+      padding: 1.2rem 3rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      box-shadow: 0 0 30px rgba(112, 0, 255, 0.4);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .btn-main:hover {
+      transform: scale(1.1) translateY(-5px);
+      box-shadow: 0 0 50px rgba(0, 242, 255, 0.6);
+    }
+
+    #hit-indicator {
+      position: absolute;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      pointer-events: none;
+      z-index: 15;
+      text-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+
+    .meshy-badge {
       position: absolute;
       bottom: 2rem;
       right: 2rem;
       font-size: 0.8rem;
       color: #555;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
   </style>
 </head>
 <body>
 
+  <canvas id="game-canvas"></canvas>
+
   <div id="ui-container">
-    <div class="top-bar">
-      <div class="game-title">NEON STRIKE</div>
-      <div class="stats">
-        <div class="stat-item">
+    <div class="hud" id="hud">
+      <div class="stats-group">
+        <div class="stat">
           <div class="stat-label">SCORE</div>
           <div id="score" class="stat-value">0</div>
         </div>
-        <div class="stat-item">
+        <div class="stat">
           <div class="stat-label">TIME</div>
-          <div id="time" class="stat-value">15</div>
+          <div id="time" class="stat-value">20</div>
         </div>
+        <div class="stat">
+          <div class="stat-label">COMBO</div>
+          <div id="combo" class="stat-value">x0</div>
+        </div>
+      </div>
+      <div style="font-family:'Orbitron'; color:var(--primary); font-size:1.2rem; text-align:right;">
+        LEVEL <span id="level">1</span>
       </div>
     </div>
 
-    <div id="message">GET READY!</div>
-
-    <div class="bottom-bar">
-      <button id="startBtn">INITIALIZE ENGINE</button>
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+      <h1 id="title-text">NEON STRIKE</h1>
+      <p style="color:#888; margin-bottom: 2rem;">Meshy.ai AI-Powered Visual Experience</p>
+      <button class="btn-main" id="start-btn">ENGAGE SYSTEM</button>
     </div>
 
-    <div class="overlay">Asset Workflow: Meshy.ai → Three.js</div>
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+      <h2 style="font-family:'Orbitron'; color:var(--secondary); font-size:1.5rem; margin-bottom:1rem;">SYSTEM SHUTDOWN</h2>
+      <h1 id="final-score">SCORE: 0</h1>
+      <button class="btn-main" id="retry-btn">REBOOT ENGINE</button>
+    </div>
+
+    <div class="meshy-badge">Powered by Three.js & Meshy.ai Aesthetic</div>
   </div>
 
-  <canvas id="game-canvas"></canvas>
-
-  <!-- Three.js Library -->
+  <!-- Three.js Import Map -->
   <script type="importmap">
     {
       "imports": {
@@ -181,174 +197,266 @@
 
   <script type="module">
     import * as THREE from 'three';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+    // --- Core Variables ---
+    let scene, camera, renderer, composer;
+    let target, particles = [];
+    let score = 0, timeLeft = 20, combo = 0, level = 1;
+    let isPlaying = false, lastHitTime = 0;
+    let targetType = 'normal'; // 'normal' or 'bonus'
+
     const canvas = document.getElementById('game-canvas');
+    const hud = document.getElementById('hud');
     const scoreEl = document.getElementById('score');
     const timeEl = document.getElementById('time');
-    const startBtn = document.getElementById('startBtn');
-    const messageEl = document.getElementById('message');
+    const comboEl = document.getElementById('combo');
+    const levelEl = document.getElementById('level');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const finalScoreEl = document.getElementById('final-score');
 
-    let score = 0;
-    let timeLeft = 15;
-    let timerId = null;
-    let isGameRunning = false;
+    // --- Initialization ---
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x020205);
+      scene.fog = new THREE.FogExp2(0x020205, 0.05);
 
-    // --- Three.js Setup ---
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050507);
-    scene.fog = new THREE.Fog(0x050507, 5, 25);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 12;
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 10;
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false }); // Antialias false for post-processing
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ReinhardToneMapping;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
+      // Post Processing (Bloom)
+      const renderScene = new RenderPass(scene, camera);
+      const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+      bloomPass.threshold = 0.21;
+      bloomPass.strength = 1.2;
+      bloomPass.radius = 0.55;
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
+      composer = new EffectComposer(renderer);
+      composer.addPass(renderScene);
+      composer.addPass(bloomPass);
 
-    const mainLight = new THREE.PointLight(0x00f2ff, 20, 50);
-    mainLight.position.set(5, 5, 10);
-    scene.add(mainLight);
+      // Lights
+      const ambient = new THREE.AmbientLight(0xffffff, 0.2);
+      scene.add(ambient);
 
-    const secondaryLight = new THREE.PointLight(0x7000ff, 15, 50);
-    secondaryLight.position.set(-5, -5, 5);
-    scene.add(secondaryLight);
+      const p1 = new THREE.PointLight(0x00f2ff, 10, 40);
+      p1.position.set(10, 10, 5);
+      scene.add(p1);
 
-    // Floor Grid (Meshy.ai style environment)
-    const grid = new THREE.GridHelper(100, 40, 0x00f2ff, 0x111111);
-    grid.rotation.x = Math.PI / 2;
-    grid.position.z = -5;
-    scene.add(grid);
+      const p2 = new THREE.PointLight(0x7000ff, 10, 40);
+      p2.position.set(-10, -10, 5);
+      scene.add(p2);
 
-    // Target Object
-    let targetMesh;
-    const loader = new GLTFLoader();
+      // Grid & Environment
+      const grid = new THREE.GridHelper(200, 50, 0x00f2ff, 0x050505);
+      grid.rotation.x = Math.PI / 2;
+      grid.position.z = -10;
+      scene.add(grid);
 
-    // Placeholder Target (Sphere with Neon Glow)
-    const geometry = new THREE.SphereGeometry(1, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ 
-      color: 0xffffff,
-      metalness: 0.9,
-      roughness: 0.1,
-      emissive: 0x00f2ff,
-      emissiveIntensity: 0.5
-    });
-    targetMesh = new THREE.Mesh(geometry, material);
-    targetMesh.visible = false;
-    scene.add(targetMesh);
-
-    // Raycaster for clicking
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    function moveTarget() {
-      const x = (Math.random() - 0.5) * 12;
-      const y = (Math.random() - 0.5) * 8;
-      const z = (Math.random() - 0.5) * 4;
-      targetMesh.position.set(x, y, z);
-      targetMesh.scale.set(0, 0, 0);
-      
-      // Basic entrance animation
-      new Promise(resolve => {
-        let s = 0;
-        const grow = () => {
-          s += 0.1;
-          targetMesh.scale.set(s, s, s);
-          if (s < 1) requestAnimationFrame(grow);
-          else resolve();
-        };
-        grow();
+      // Create Target
+      const geo = new THREE.IcosahedronGeometry(1, 0);
+      const mat = new THREE.MeshStandardMaterial({ 
+        color: 0x00f2ff, 
+        emissive: 0x00f2ff, 
+        emissiveIntensity: 1,
+        metalness: 0.9,
+        roughness: 0.1
       });
+      target = new THREE.Mesh(geo, mat);
+      target.visible = false;
+      scene.add(target);
+
+      window.addEventListener('resize', onWindowResize);
+      canvas.addEventListener('mousedown', onMouseDown);
+      document.getElementById('start-btn').addEventListener('click', startGame);
+      document.getElementById('retry-btn').addEventListener('click', startGame);
+
+      animate();
     }
 
-    function onMouseClick(event) {
-      if (!isGameRunning) return;
-
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(targetMesh);
-
-      if (intersects.length > 0) {
-        score++;
-        scoreEl.textContent = score;
-        
-        // Visual feedback
-        targetMesh.material.emissive.setHex(0xff00ff);
-        setTimeout(() => targetMesh.material.emissive.setHex(0x00f2ff), 100);
-        
-        moveTarget();
-      }
-    }
-
+    // --- Gameplay Logic ---
     function startGame() {
-      score = 0;
-      timeLeft = 15;
-      isGameRunning = true;
-      scoreEl.textContent = score;
-      timeEl.textContent = timeLeft;
+      score = 0; timeLeft = 20; combo = 0; level = 1;
+      updateUI();
       
-      startBtn.disabled = true;
-      targetMesh.visible = true;
-      moveTarget();
-
-      messageEl.textContent = "STRIKE!";
-      messageEl.style.opacity = 1;
-      setTimeout(() => messageEl.style.opacity = 0, 1000);
-
-      timerId = setInterval(() => {
+      startScreen.classList.add('hidden');
+      gameOverScreen.classList.add('hidden');
+      hud.classList.add('visible');
+      
+      isPlaying = true;
+      spawnTarget();
+      
+      const timer = setInterval(() => {
+        if (!isPlaying) {
+          clearInterval(timer);
+          return;
+        }
         timeLeft--;
-        timeEl.textContent = timeLeft;
+        updateUI();
         if (timeLeft <= 0) endGame();
       }, 1000);
     }
 
     function endGame() {
-      clearInterval(timerId);
-      isGameRunning = false;
-      targetMesh.visible = false;
-      startBtn.disabled = false;
-      startBtn.textContent = "REBOOT SYSTEM";
-      
-      messageEl.textContent = `FINAL SCORE: ${score}`;
-      messageEl.style.opacity = 1;
+      isPlaying = false;
+      target.visible = false;
+      hud.classList.remove('visible');
+      gameOverScreen.classList.remove('hidden');
+      finalScoreEl.textContent = `SCORE: ${score}`;
     }
 
-    window.addEventListener('click', onMouseClick);
-    startBtn.addEventListener('click', startGame);
+    function spawnTarget() {
+      targetType = Math.random() > 0.9 ? 'bonus' : 'normal';
+      
+      const rangeX = 14, rangeY = 8;
+      target.position.x = (Math.random() - 0.5) * rangeX;
+      target.position.y = (Math.random() - 0.5) * rangeY;
+      target.position.z = (Math.random() - 0.5) * 5;
+      
+      if (targetType === 'bonus') {
+        target.material.color.setHex(0xffcf33);
+        target.material.emissive.setHex(0xffcf33);
+        target.scale.set(0.6, 0.6, 0.6); // Smaller but more points
+      } else {
+        target.material.color.setHex(0x00f2ff);
+        target.material.emissive.setHex(0x00f2ff);
+        // Shrink target based on level
+        const size = Math.max(0.4, 1.2 - (level * 0.05));
+        target.scale.set(size, size, size);
+      }
+      
+      target.visible = true;
+    }
 
-    // Resize Handler
-    window.addEventListener('resize', () => {
+    function onMouseDown(e) {
+      if (!isPlaying) return;
+
+      const mouse = new THREE.Vector2(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+      );
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(target);
+
+      if (intersects.length > 0) {
+        handleHit();
+      } else {
+        combo = 0; // Miss resets combo
+        updateUI();
+      }
+    }
+
+    function handleHit() {
+      const now = Date.now();
+      if (now - lastHitTime < 1000) {
+        combo++;
+      } else {
+        combo = 1;
+      }
+      lastHitTime = now;
+
+      // Score Calculation
+      let points = (targetType === 'bonus' ? 50 : 10) * (1 + Math.floor(combo / 5));
+      score += points;
+      
+      if (targetType === 'bonus') timeLeft += 3;
+
+      // Leveling
+      if (score > level * 200) {
+        level++;
+        timeLeft += 5; // Bonus time for level up
+      }
+
+      createExplosion(target.position, targetType === 'bonus' ? 0xffcf33 : 0x00f2ff);
+      shakeCamera();
+      spawnTarget();
+      updateUI();
+    }
+
+    // --- Visual Effects ---
+    function createExplosion(pos, color) {
+      for (let i = 0; i < 15; i++) {
+        const pGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        const pMat = new THREE.MeshBasicMaterial({ color: color });
+        const p = new THREE.Mesh(pGeo, pMat);
+        p.position.copy(pos);
+        p.userData.velocity = new THREE.Vector3(
+          (Math.random() - 0.5) * 0.5,
+          (Math.random() - 0.5) * 0.5,
+          (Math.random() - 0.5) * 0.5
+        );
+        p.userData.life = 1.0;
+        scene.add(p);
+        particles.push(p);
+      }
+    }
+
+    function shakeCamera() {
+      const originalPos = camera.position.clone();
+      let count = 0;
+      const shake = () => {
+        camera.position.x += (Math.random() - 0.5) * 0.2;
+        camera.position.y += (Math.random() - 0.5) * 0.2;
+        count++;
+        if (count < 10) requestAnimationFrame(shake);
+        else camera.position.copy(originalPos);
+      };
+      shake();
+    }
+
+    function updateUI() {
+      scoreEl.textContent = score;
+      timeEl.textContent = timeLeft;
+      comboEl.textContent = `x${combo}`;
+      levelEl.textContent = level;
+      
+      if (combo > 5) comboEl.style.color = '#ff00ff';
+      else comboEl.style.color = 'var(--secondary)';
+    }
+
+    function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+      composer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-    // Animation Loop
     function animate(time) {
       requestAnimationFrame(animate);
       
-      if (targetMesh) {
-        targetMesh.rotation.y += 0.02;
-        targetMesh.rotation.x += 0.01;
-        // Floating effect
-        targetMesh.position.y += Math.sin(time * 0.005) * 0.005;
+      if (target && target.visible) {
+        target.rotation.y += 0.05;
+        target.rotation.x += 0.02;
+        target.position.y += Math.sin(time * 0.005) * 0.01;
       }
 
-      // Background movement
-      mainLight.position.x = Math.sin(time * 0.001) * 10;
-      secondaryLight.position.y = Math.cos(time * 0.001) * 10;
+      // Update Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.position.add(p.userData.velocity);
+        p.userData.life -= 0.02;
+        p.scale.setScalar(p.userData.life);
+        if (p.userData.life <= 0) {
+          scene.remove(p);
+          particles.splice(i, 1);
+        }
+      }
 
-      renderer.render(scene, camera);
+      composer.render();
     }
-    animate();
 
+    init();
   </script>
 </body>
 </html>
