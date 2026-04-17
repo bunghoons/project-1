@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Hardcore Extraction - Web Prototype</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; }
+        #hud { position: absolute; top: 20px; left: 20px; color: #ff0000; pointer-events: none; }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; border: 1px solid white; transform: translate(-50%, -50%); }
+        
+        /* Tarkov 스타일 인벤토리 컨테이너 */
+        #inventoryContainer {
+            position: absolute; bottom: 20px; right: 20px;
+            display: none; z-index: 100; pointer-events: auto;
+            background: rgba(0,0,0,0.95); border: 2px solid #ff0000;
+            padding: 15px; gap: 20px;
+        }
+        
+        .inv-visible { cursor: auto; }
+        
+        #equipmentPanel {
+            display: flex; flex-direction: column; gap: 10px; width: 150px;
+            border-right: 2px solid #ff0000; padding-right: 15px;
+            position: relative;
+        }
+
+        /* 캐릭터 중심 배치 */
+        .equipment-container {
+            position: relative;
+            width: 200px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .character-silhouette {
+            width: 80px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #ff0000;
+            border-radius: 10px;
+            position: absolute;
+        }
+
+        /* 슬롯 위치 지정 */
+        .equipment-slot {
+            width: 60px; height: 40px; background: #1a1a1a; border: 2px solid #444;
+            display: flex; align-items: center; justify-content: center;
+            color: #888; font-size: 9px; cursor: pointer; position: absolute;
+            transition: all 0.2s;
+        }
+
+        .equipment-slot:hover { border-color: #ff0000; }
+        .equipment-slot.filled { border-color: #00ff00; }
+
+        /* 각 슬롯 위치 */
+        .equipment-slot[data-slot="head"] { top: 10px; left: 50%; transform: translateX(-50%); }
+        .equipment-slot[data-slot="body"] { top: 60px; left: 50%; transform: translateX(-50%); width: 80px; }
+        .equipment-slot[data-slot="secondary"] { top: 110px; left: 10px; }
+        .equipment-slot[data-slot="primary"] { top: 110px; right: 10px; }
+        .equipment-slot[data-slot="back"] { bottom: 10px; left: 50%; transform: translateX(-50%); width: 80px; }
+        .equipment-slot[data-slot="melee"] { top: 160px; left: 50%; transform: translateX(-50%); width: 80px; }
+
+        .equipment-slot-item {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            background: #0080ff; color: white; font-size: 8px; font-weight: bold;
+            border: 1px solid #00ff00; text-align: center; overflow: hidden;
+        }
+
+        #quickSlotPanel {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .quick-slot-group {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .quick-slot-group.single {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-slot-slot {
+            background: #181818;
+            border: 1px solid #444;
+            padding: 8px;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            color: #ccc;
+            font-size: 11px;
+        }
+
+        .quick-slot-slot.selected {
+            border-color: #00ff00;
+            background: rgba(0, 128, 0, 0.12);
+        }
+
+        .quick-slot-number {
+            color: #ff0000;
+            font-weight: bold;
+        }
+
+        .quick-slot-label {
+            color: #aaa;
+            font-size: 10px;
+        }
+        
+        #gridInventory {
+            display: grid; grid-template-columns: repeat(10, 40px); grid-template-rows: repeat(10, 40px);
+            gap: 2px; background: rgba(0,0,0,0.5); border: 2px solid #444; padding: 10px;
+        }
+        
+        .slot { 
+            width: 40px; height: 40px; background: #1a1a1a; border: 1px solid #333; 
+        }
+        
+        .inv-item { 
+            background: #55acee; border: 2px solid #fff; cursor: move; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 10px; color: white; text-shadow: 1px 1px 2px black; padding: 2px;
+            transition: transform 0.1s;
+        }
+        
+        .inv-item:hover { transform: scale(1.05); }
+        
+        .item-name { font-weight: bold; font-size: 9px; }
+        .item-size { font-size: 8px; opacity: 0.8; }
+        
+        .context-menu { 
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            min-width: 120px;
+        }
+        
+        .context-menu div { 
+            white-space: nowrap;
+        }
+        
+        .tooltip {
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div id="hud" style="position: absolute; top: 20px; left: 20px; color: #ff0000; pointer-events: none; display: none; font-size: 11px;">
+    <div>STATUS: IN-RAID</div>
+    <div id="timer">TIME: 20:00</div>
+    <div id="hp">HP: 100</div>
+    <div id="equippedWeapon" style="margin-top: 10px; color: #00ff00;"></div>
+    <div style="margin-top: 10px; color: #888; font-size: 10px;">
+        <div>WASD Move | SHIFT Sprint | CTRL Crouch</div>
+        <div>E Loot | I Inventory | Click Shoot</div>
+        <div>1/2 Select Gun | 3 Select Melee/Light</div>
+        <div>V Use Medkit / Flashlight | Right Click Menu</div>
+    </div>
+</div>
+<div id="crosshair" style="display: none;"></div>
+
+<!-- Tarkov 스타일 인벤토리 -->
+<div id="inventoryContainer">
+    <div id="equipmentPanel">
+        <div style="color: #ff0000; font-weight: bold; text-align: center; margin-bottom: 10px; font-size: 12px;">CHARACTER</div>
+        <div class="equipment-container">
+            <div class="character-silhouette"></div>
+            <div class="equipment-slot" data-slot="head" title="Head/Helmet">HEAD</div>
+            <div class="equipment-slot" data-slot="body" title="Body/Armor">BODY</div>
+            <div class="equipment-slot" data-slot="secondary" title="Secondary Weapon">2ND</div>
+            <div class="equipment-slot" data-slot="primary" title="Primary Weapon">1ST</div>
+            <div class="equipment-slot" data-slot="melee" title="Melee / Flashlight">3RD</div>
+            <div class="equipment-slot" data-slot="back" title="Backpack">BACK</div>
+        </div>
+    </div>
+    <div id="gridInventory"></div>
+    <div id="quickSlotPanel">
+        <div class="quick-slot-group">
+            <div class="quick-slot-slot" data-quick="1"><div class="quick-slot-number">1</div><div class="quick-slot-label">Primary Weapon</div><div class="quick-slot-item">EMPTY</div></div>
+            <div class="quick-slot-slot" data-quick="2"><div class="quick-slot-number">2</div><div class="quick-slot-label">Secondary Weapon</div><div class="quick-slot-item">EMPTY</div></div>
+        </div>
+        <div class="quick-slot-group single">
+            <div class="quick-slot-slot" data-quick="3"><div class="quick-slot-number">3</div><div class="quick-slot-label">Melee / Flashlight</div><div class="quick-slot-item">EMPTY</div></div>
+        </div>
+    </div>
+</div>
+
+<div id="lobbyMenu" style="position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 20px; border: 2px solid #ff0000; display: none; z-index: 100; pointer-events: auto;">
+    <h2>Shop Menu</h2>
+    <p>Money: <span id="playerMoney">200</span></p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div>
+            <h3>Weapon</h3>
+            <button onclick="buyItemInLobby('pistol')" style="width: 100%; padding: 5px; cursor: pointer;">Pistol - 150</button>
+            <button onclick="buyItemInLobby('rifle')" style="width: 100%; padding: 5px; cursor: pointer;">Rifle - 300</button>
+            <button onclick="buyItemInLobby('bat')" style="width: 100%; padding: 5px; cursor: pointer;">Bat - 50</button>
+        </div>
+        <div>
+            <h3>Bag</h3>
+            <button onclick="buyItemInLobby('smallBackpack')" style="width: 100%; padding: 5px; cursor: pointer;">Small Bag - 100</button>
+            <button onclick="buyItemInLobby('backpack')" style="width: 100%; padding: 5px; cursor: pointer;">Backpack - 150</button>
+        </div>
+        <div>
+            <h3>Misc</h3>
+            <button onclick="buyItemInLobby('medkit')" style="width: 100%; padding: 5px; cursor: pointer;">Medkit - 50</button>
+            <button onclick="buyItemInLobby('ammo')" style="width: 100%; padding: 5px; cursor: pointer;">Ammo - 20</button>
+            <button onclick="buyItemInLobby('flashlight')" style="width: 100%; padding: 5px; cursor: pointer;">Flashlight - 30</button>
+        </div>
+        <div>
+            <h3>Armor</h3>
+            <button onclick="buyItemInLobby('armor')" style="width: 100%; padding: 5px; cursor: pointer;">Armor - 200</button>
+            <button onclick="buyItemInLobby('helmet')" style="width: 100%; padding: 5px; cursor: pointer;">Helmet - 120</button>
+        </div>
+    </div>
+    <button id="startGame" onclick="startGame()" style="width: 100%; padding: 10px; margin-top: 15px; background: #00ff00; color: #000; font-weight: bold; cursor: pointer;">Start Game</button>
+</div>
+
+
+<!-- Three.js Import -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+    /**
+     * [1. 시스템 핵심 데이터 - ScriptableObject 역할]
+     */
+    const WEAPON_DATA = {
+        damage: 35,
+        recoil: 0.05,
+        fireRate: 600, // RPM
+        range: 100
+    };
+
+    const ITEM_DATA = {
+        medkit: { name: 'Medkit', weight: 1, rarity: 'common', type: 'consumable', price: 50, width: 1, height: 1 },
+        ammo: { name: 'Ammo', weight: 0.5, rarity: 'common', type: 'ammo', price: 20, width: 1, height: 1 },
+        armor: { name: 'Armor', weight: 5, rarity: 'rare', type: 'armor', price: 200, width: 2, height: 3 },
+        pistol: { name: 'Pistol', weight: 2, rarity: 'common', type: 'weapon', price: 150, width: 1, height: 2 },
+        rifle: { name: 'Rifle', weight: 4, rarity: 'rare', type: 'weapon', price: 300, width: 2, height: 5 },
+        smallBackpack: { name: 'Small Backpack', weight: 1, rarity: 'common', type: 'equipment', price: 100, width: 2, height: 3 },
+        backpack: { name: 'Backpack', weight: 3, rarity: 'uncommon', type: 'equipment', price: 150, width: 3, height: 4 },
+        grenade: { name: 'Grenade', weight: 1, rarity: 'rare', type: 'consumable', price: 80, width: 1, height: 1 },
+        flashlight: { name: 'Flashlight', weight: 0.5, rarity: 'common', type: 'tool', price: 30, width: 1, height: 1 },
+        bat: { name: 'Baseball Bat', weight: 2, rarity: 'common', type: 'weapon', price: 50, width: 1, height: 4 },
+        helmet: { name: 'Helmet', weight: 1, rarity: 'uncommon', type: 'armor', price: 120, width: 2, height: 2 }
+    };
+
+    /**
+     * [2. Player 클래스]
+     */
+    class Player {
+        constructor(camera, controls) {
+            this.camera = camera;
+            this.controls = controls;
+            this.hp = 100;
+            this.stamina = 100;
+            this.maxStamina = 100;
+            this.inventory = new Inventory();
+            this.position = new THREE.Vector3(0, 1, 0);
+            this.velocity = new THREE.Vector3();
+            this.moveSpeed = 5; // 기본 이동 속도
+            this.isSprinting = false;
+            this.isCrouching = false;
+            this.isGrounded = true;
+            this.keys = { w: false, a: false, s: false, d: false, shift: false, ctrl: false };
+            this.hasWeapon = false; // 총 보유 여부
+            this.money = 200; // 시작 돈
+        }
+
+        update(deltaTime) {
+            this.handleMovement(deltaTime);
+            this.updateStamina(deltaTime);
+            // HP 업데이트
+            document.getElementById('hp').innerText = `HP: ${Math.floor(this.hp)}`;
+            // 장착 무기 표시
+            this.updateEquippedWeaponDisplay();
+        }
+
+        updateEquippedWeaponDisplay() {
+            const equipped = JSON.parse(localStorage.getItem('equippedItems')) || {};
+            const weaponDisplay = document.getElementById('equippedWeapon');
+            const slotOrder = [
+                { key: 'primary', label: '1' },
+                { key: 'secondary', label: '2' },
+                { key: 'melee', label: '3' }
+            ];
+
+            const parts = slotOrder.map(slot => {
+                const itemId = equipped[slot.key];
+                const item = this.inventory.items.find(i => i.id === itemId);
+                if (!item) return `${slot.label}: EMPTY`;
+                const name = ITEM_DATA[item.itemKey].name;
+                return `${slot.label}: ${name}`;
+            });
+
+            if (weaponDisplay) {
+                weaponDisplay.innerText = parts.join(' | ');
+            }
+        }
+
+        handleMovement(deltaTime) {
+            let moveVector = new THREE.Vector3();
+            if (this.keys.w) moveVector.z -= 1;
+            if (this.keys.s) moveVector.z += 1;
+            if (this.keys.a) moveVector.x -= 1;
+            if (this.keys.d) moveVector.x += 1;
+
+            if (moveVector.length() > 0) {
+                moveVector.normalize();
+                moveVector.applyQuaternion(this.camera.quaternion);
+                moveVector.y = 0; // 수평 이동만
+
+                let speed = this.moveSpeed;
+                if (this.isSprinting && this.stamina > 0) {
+                    speed *= 2; // 달리기 2배
+                }
+                if (this.isCrouching) {
+                    speed *= 0.5; // 웅크리기 0.5배
+                }
+
+                this.position.add(moveVector.multiplyScalar(speed * deltaTime));
+                this.camera.position.copy(this.position);
+            }
+        }
+
+        updateStamina(deltaTime) {
+            if (this.isSprinting && (this.keys.w || this.keys.a || this.keys.s || this.keys.d)) {
+                this.stamina -= 20 * deltaTime;
+                if (this.stamina < 0) this.stamina = 0;
+            } else {
+                this.stamina = Math.min(this.stamina + 10 * deltaTime, this.maxStamina);
+            }
+        }
+
+        takeDamage(amount) {
+            this.hp -= amount;
+            if (this.hp <= 0) {
+                console.log("Player Died!");
+                // 게임 오버 로직
+            }
+        }
+    }
+
+    /**
+     * [3. Inventory 클래스 - Tarkov 스타일 Tetris 기반]
+     */
+    class Inventory {
+        constructor() {
+            this.gridWidth = 10;
+            this.gridHeight = 10;
+            this.grid = Array(this.gridHeight).fill().map(() => Array(this.gridWidth).fill(null));
+            this.items = []; // { id, itemKey, x, y, rotated }
+            this.maxWeight = 50;
+            this.currentWeight = 0;
+            this.nextItemId = 0;
+            this.cellSize = 40;
+            this.currentContextMenu = null;
+            this.currentContextMenuItem = null;
+        }
+
+        canPlaceItem(itemKey, x, y, rotated = false) {
+            const itemData = ITEM_DATA[itemKey];
+            const width = rotated ? itemData.height : itemData.width;
+            const height = rotated ? itemData.width : itemData.height;
+
+            if (x + width > this.gridWidth || y + height > this.gridHeight) return false;
+
+            for (let dy = 0; dy < height; dy++) {
+                for (let dx = 0; dx < width; dx++) {
+                    if (this.grid[y + dy][x + dx] !== null) return false;
+                }
+            }
+            return true;
+        }
+
+        placeItem(itemKey, x, y, rotated = false) {
+            const itemData = ITEM_DATA[itemKey];
+            const width = rotated ? itemData.height : itemData.width;
+            const height = rotated ? itemData.width : itemData.height;
+
+            if (!this.canPlaceItem(itemKey, x, y, rotated)) return null;
+
+            const itemId = this.nextItemId++;
+            
+            // 그리드에 아이템 ID 배치
+            for (let dy = 0; dy < height; dy++) {
+                for (let dx = 0; dx < width; dx++) {
+                    this.grid[y + dy][x + dx] = itemId;
+                }
+            }
+
+            const item = {
+                id: itemId,
+                itemKey,
+                x,
+                y,
+                rotated,
+                quantity: 1,
+                durability: 100
+            };
+
+            this.items.push(item);
+            this.currentWeight += itemData.weight;
+            return item;
+        }
+
+        removeItem(itemId) {
+            const item = this.items.find(i => i.id === itemId);
+            if (!item) return false;
+
+            const itemData = ITEM_DATA[item.itemKey];
+            const width = item.rotated ? itemData.height : itemData.width;
+            const height = item.rotated ? itemData.width : itemData.height;
+
+            for (let dy = 0; dy < height; dy++) {
+                for (let dx = 0; dx < width; dx++) {
+                    this.grid[item.y + dy][item.x + dx] = null;
+                }
+            }
+
+            this.currentWeight -= itemData.weight;
+            this.items = this.items.filter(i => i.id !== itemId);
+            return true;
+        }
+
+        moveItem(itemId, newX, newY, newRotated = false) {
+            const item = this.items.find(i => i.id === itemId);
+            if (!item) return false;
+
+            const itemData = ITEM_DATA[item.itemKey];
+            const oldWidth = item.rotated ? itemData.height : itemData.width;
+            const oldHeight = item.rotated ? itemData.width : itemData.height;
+            const newWidth = newRotated ? itemData.height : itemData.width;
+            const newHeight = newRotated ? itemData.width : itemData.height;
+
+            // 기존 위치 해제
+            for (let dy = 0; dy < oldHeight; dy++) {
+                for (let dx = 0; dx < oldWidth; dx++) {
+                    this.grid[item.y + dy][item.x + dx] = null;
+                }
+            }
+
+            // 새로운 위치 확인
+            if (newX + newWidth > this.gridWidth || newY + newHeight > this.gridHeight) {
+                // 복구
+                for (let dy = 0; dy < oldHeight; dy++) {
+                    for (let dx = 0; dx < oldWidth; dx++) {
+                        this.grid[item.y + dy][item.x + dx] = itemId;
+                    }
+                }
+                return false;
+            }
+
+            for (let dy = 0; dy < newHeight; dy++) {
+                for (let dx = 0; dx < newWidth; dx++) {
+                    if (this.grid[newY + dy][newX + dx] !== null) {
+                        // 복구
+                        for (let dy2 = 0; dy2 < oldHeight; dy2++) {
+                            for (let dx2 = 0; dx2 < oldWidth; dx2++) {
+                                this.grid[item.y + dy2][item.x + dx2] = itemId;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+
+            // 새 위치에 배치
+            for (let dy = 0; dy < newHeight; dy++) {
+                for (let dx = 0; dx < newWidth; dx++) {
+                    this.grid[newY + dy][newX + dx] = itemId;
+                }
+            }
+
+            item.x = newX;
+            item.y = newY;
+            item.rotated = newRotated;
+            return true;
+        }
+
+        addItem(itemKey, quantity = 1) {
+            const item = ITEM_DATA[itemKey];
+            if (this.currentWeight + item.weight * quantity > this.maxWeight) {
+                console.log("Inventory Full!");
+                return null;
+            }
+
+            // 첫 번째 빈 공간 찾기 (자동 배치)
+            for (let y = 0; y < this.gridHeight; y++) {
+                for (let x = 0; x < this.gridWidth; x++) {
+                    const placed = this.placeItem(itemKey, x, y, false);
+                    if (placed) {
+                        this.updateUI();
+                        return placed;
+                    }
+                    // 회전 시도
+                    const placedRotated = this.placeItem(itemKey, x, y, true);
+                    if (placedRotated) {
+                        this.updateUI();
+                        return placedRotated;
+                    }
+                }
+            }
+            console.log("No space for item!");
+            return null;
+        }
+
+        buyItem(itemKey, player) {
+            const item = ITEM_DATA[itemKey];
+            if (player.money >= item.price) {
+                const placed = this.addItem(itemKey);
+                if (placed) {
+                    player.money -= item.price;
+                    console.log(`Bought: ${item.name} for ${item.price}`);
+                    return true;
+                }
+            } else {
+                console.log("Not enough money!");
+            }
+            return false;
+        }
+
+        getItemAtCell(x, y) {
+            if (x < 0 || x >= this.gridWidth || y < 0 || y >= this.gridHeight) return null;
+            const itemId = this.grid[y][x];
+            return this.items.find(i => i.id === itemId) || null;
+        }
+
+        equippedItems() {
+            return JSON.parse(localStorage.getItem('equippedItems')) || {};
+        }
+
+        equipItem(item) {
+            const itemData = ITEM_DATA[item.itemKey];
+            const equipped = this.equippedItems();
+            let slotName = null;
+
+            if (itemData.type === 'armor') {
+                slotName = itemData.name.includes('Helmet') ? 'head' : 'body';
+            } else if (itemData.type === 'equipment' && item.itemKey !== 'flashlight') {
+                slotName = 'back';
+            } else if (itemData.type === 'tool' && item.itemKey === 'flashlight') {
+                slotName = 'melee';
+            } else if (itemData.type === 'weapon') {
+                if (item.itemKey === 'rifle') {
+                    slotName = 'primary';
+                } else if (item.itemKey === 'bat') {
+                    slotName = 'melee';
+                } else {
+                    slotName = equipped.primary ? 'secondary' : 'primary';
+                }
+            }
+
+            if (slotName) {
+                if (equipped[slotName] && equipped[slotName] !== item.id) {
+                    this.unequipItem(slotName);
+                }
+
+                equipped[slotName] = item.id;
+                localStorage.setItem('equippedItems', JSON.stringify(equipped));
+                this.updateEquipmentUI();
+                this.updateUI();
+            }
+        }
+
+        unequipItem(slotName) {
+            const equipped = this.equippedItems();
+            delete equipped[slotName];
+            localStorage.setItem('equippedItems', JSON.stringify(equipped));
+            this.updateEquipmentUI();
+            this.updateUI();
+        }
+
+        updateEquipmentUI() {
+            const equipped = this.equippedItems();
+            const slots = document.querySelectorAll('.equipment-slot');
+
+            slots.forEach(slot => {
+                const slotName = slot.dataset.slot;
+                const itemId = equipped[slotName];
+                const item = this.items.find(i => i.id === itemId);
+
+                slot.innerHTML = '';
+                if (item) {
+                    const itemData = ITEM_DATA[item.itemKey];
+                    slot.classList.add('filled');
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'equipment-slot-item';
+                    const icon = this.getItemIcon(itemData.type);
+                    itemEl.textContent = icon + ' ' + itemData.name.substring(0, 8);
+                    itemEl.style.cursor = 'pointer';
+                    itemEl.title = `${itemData.name} - Click to unequip`;
+                    itemEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.unequipItem(slotName);
+                    });
+                    slot.appendChild(itemEl);
+                } else {
+                    slot.classList.remove('filled');
+                    slot.textContent = slotName.toUpperCase().substring(0, 3);
+                }
+            });
+        }
+
+        getQuickSlotItem(index) {
+            const equipped = this.equippedItems();
+            const key = index === 1 ? 'primary' : index === 2 ? 'secondary' : 'melee';
+            const itemId = equipped[key];
+            return this.items.find(i => i.id === itemId) || null;
+        }
+
+        updateQuickSlotUI() {
+            const slots = document.querySelectorAll('.quick-slot-slot');
+            const selected = window.currentQuickSlot || 1;
+            slots.forEach(slot => {
+                const quickIndex = Number(slot.dataset.quick);
+                const item = this.getQuickSlotItem(quickIndex);
+                slot.classList.toggle('selected', quickIndex === selected);
+                const label = item ? ITEM_DATA[item.itemKey].name : 'EMPTY';
+                const text = slot.querySelector('.quick-slot-item');
+                if (text) text.textContent = label;
+            });
+        }
+
+        getItemIcon(type) {
+            const icons = {
+                weapon: '🔫',
+                armor: '🛡️',
+                equipment: '🎒',
+                consumable: '💊',
+                ammo: '📦',
+                tool: '🔦'
+            };
+            return icons[type] || '📦';
+        }
+
+        updateUI() {
+            const inv = document.getElementById('gridInventory');
+            inv.innerHTML = '';
+            
+            // 그리드 배경
+            for (let y = 0; y < this.gridHeight; y++) {
+                for (let x = 0; x < this.gridWidth; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'slot';
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    inv.appendChild(cell);
+                }
+            }
+
+            this.updateEquipmentUI();
+            this.updateQuickSlotUI();
+
+            // 아이템 렌더링 (장착되지 않은 것만)
+            const equipped = this.equippedItems();
+            this.items.filter(item => !Object.values(equipped).includes(item.id)).forEach(item => {
+                const itemData = ITEM_DATA[item.itemKey];
+                const width = item.rotated ? itemData.height : itemData.width;
+                const height = item.rotated ? itemData.width : itemData.height;
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'inv-item';
+                itemEl.dataset.itemId = item.id;
+                itemEl.dataset.x = item.x;
+                itemEl.dataset.y = item.y;
+                itemEl.style.gridColumn = `${item.x + 1} / span ${width}`;
+                itemEl.style.gridRow = `${item.y + 1} / span ${height}`;
+                itemEl.style.backgroundColor = this.getRarityColor(itemData.rarity);
+                itemEl.title = `${itemData.name} (${item.rotated ? '회전' : '정상'})`;
+                itemEl.innerHTML = `
+                    <div class="item-name">${itemData.name}</div>
+                    <div class="item-size">${width}x${height}${item.rotated ? ' ↔' : ''}</div>
+                `;
+                
+                itemEl.addEventListener('mousedown', (e) => this.startDrag(e, item));
+                itemEl.addEventListener('contextmenu', (e) => this.showContextMenu(e, item));
+                itemEl.addEventListener('mouseenter', (e) => this.showTooltip(e, item));
+                itemEl.addEventListener('mouseleave', () => this.hideTooltip());
+                itemEl.addEventListener('dblclick', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.equipItem(item);
+                });
+
+                inv.appendChild(itemEl);
+            });
+        }
+
+        getRarityColor(rarity) {
+            const colors = {
+                common: '#888888',
+                uncommon: '#00ff00',
+                rare: '#0080ff',
+                epic: '#8000ff',
+                legendary: '#ffff00'
+            };
+            return colors[rarity] || '#888888';
+        }
+
+        startDrag(e, item) {
+            if (e.button !== 0 || e.detail > 1) return; // 좌클릭이면서 더블클릭은 드래그 취소
+            
+            const itemData = ITEM_DATA[item.itemKey];
+            const width = item.rotated ? itemData.height : itemData.width;
+            const height = item.rotated ? itemData.width : itemData.height;
+
+            const dragImage = document.createElement('div');
+            dragImage.style.position = 'absolute';
+            dragImage.style.width = width * this.cellSize + 'px';
+            dragImage.style.height = height * this.cellSize + 'px';
+            dragImage.style.backgroundColor = this.getRarityColor(itemData.rarity);
+            dragImage.style.opacity = '0.7';
+            dragImage.style.pointerEvents = 'none';
+            dragImage.style.zIndex = '1000';
+            document.body.appendChild(dragImage);
+
+            const startX = e.clientX;
+            const startY = e.clientY;
+
+            const onMouseMove = (moveE) => {
+                dragImage.style.left = (moveE.clientX - startX) + 'px';
+                dragImage.style.top = (moveE.clientY - startY) + 'px';
+            };
+
+            const onMouseUp = (upE) => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                document.body.removeChild(dragImage);
+
+                // 그리드 좌표 계산
+                const inv = document.getElementById('gridInventory');
+                const rect = inv.getBoundingClientRect();
+                const gridX = Math.floor((upE.clientX - rect.left) / this.cellSize);
+                const gridY = Math.floor((upE.clientY - rect.top) / this.cellSize);
+
+                this.moveItem(item.id, gridX, gridY, item.rotated);
+                this.updateUI();
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        showContextMenu(e, item) {
+            e.preventDefault();
+
+            if (this.currentContextMenu) {
+                document.body.removeChild(this.currentContextMenu);
+                if (this.currentContextMenuItem === item.id) {
+                    this.currentContextMenu = null;
+                    this.currentContextMenuItem = null;
+                    return;
+                }
+                this.currentContextMenu = null;
+                this.currentContextMenuItem = null;
+            }
+
+            const menu = document.createElement('div');
+            menu.className = 'context-menu';
+            menu.style.position = 'absolute';
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.style.backgroundColor = 'rgba(0,0,0,0.9)';
+            menu.style.border = '1px solid #ff0000';
+            menu.style.color = 'white';
+            menu.style.zIndex = '2000';
+
+            this.currentContextMenu = menu;
+            this.currentContextMenuItem = item.id;
+
+            const itemData = ITEM_DATA[item.itemKey];
+            const equipped = this.equippedItems();
+            const isEquippable = ['armor', 'equipment', 'weapon', 'tool'].includes(itemData.type);
+            const isEquipped = Object.values(equipped).includes(item.id);
+
+            const options = [];
+            const isUsable = itemData.type === 'consumable' || itemData.itemKey === 'flashlight';
+
+            // Use 옵션 (의료용 키트 / 플래시라이트)
+            if (isUsable) {
+                options.push({
+                    label: 'Use',
+                    action: () => {
+                        if (item.itemKey === 'medkit') {
+                            const player = window.currentGame && window.currentGame.player;
+                            if (player) {
+                                player.hp = Math.min(100, player.hp + 50);
+                                this.removeItem(item.id);
+                                this.updateUI();
+                                console.log('Medkit used via context menu');
+                            }
+                        } else if (item.itemKey === 'flashlight') {
+                            window.currentGame && window.currentGame.toggleFlashlight();
+                        }
+                    }
+                });
+            }
+
+            // Equip/Unequip 옵션
+            if (isEquippable) {
+                options.push({
+                    label: isEquipped ? 'Unequip' : 'Equip',
+                    action: () => {
+                        if (isEquipped) {
+                            const slot = Object.keys(equipped).find(k => equipped[k] === item.id);
+                            this.unequipItem(slot);
+                        } else {
+                            this.equipItem(item);
+                        }
+                        this.updateUI();
+                    }
+                });
+            }
+
+            options.push(
+                { label: `Rotate (${item.rotated ? '↔' : '↕'})`, action: () => {
+                    this.moveItem(item.id, item.x, item.y, !item.rotated);
+                    this.updateUI();
+                }},
+                { label: 'Drop', action: () => {
+                    this.removeItem(item.id);
+                    this.updateUI();
+                }},
+                { label: 'Disassemble', action: () => {
+                    alert(`${itemData.name} disassembled!`);
+                    this.removeItem(item.id);
+                    this.updateUI();
+                }}
+            );
+
+            options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.textContent = opt.label;
+                btn.style.padding = '8px';
+                btn.style.cursor = 'pointer';
+                btn.style.borderBottom = '1px solid #444';
+                btn.addEventListener('click', () => {
+                    opt.action();
+                    document.body.removeChild(menu);
+                });
+                btn.addEventListener('mouseenter', () => btn.style.backgroundColor = '#333');
+                btn.addEventListener('mouseleave', () => btn.style.backgroundColor = 'transparent');
+                menu.appendChild(btn);
+            });
+
+            document.body.appendChild(menu);
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e2) {
+                    if (!menu.contains(e2.target)) {
+                        if (document.body.contains(menu)) document.body.removeChild(menu);
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 0);
+        }
+
+        showTooltip(e, item) {
+            this.hideTooltip(); // 기존 툴팁 제거
+
+            const itemData = ITEM_DATA[item.itemKey];
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.style.position = 'fixed';
+            tooltip.style.left = (e.clientX + 10) + 'px';
+            tooltip.style.top = (e.clientY + 10) + 'px';
+            tooltip.style.backgroundColor = 'rgba(0,0,0,0.95)';
+            tooltip.style.border = '2px solid ' + this.getRarityColor(itemData.rarity);
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '10px';
+            tooltip.style.zIndex = '1500';
+            tooltip.style.fontSize = '12px';
+            tooltip.style.maxWidth = '200px';
+            tooltip.innerHTML = `
+                <div style="font-weight: bold; font-size: 14px;">${itemData.name}</div>
+                <div>Rarity: ${itemData.rarity}</div>
+                <div>Type: ${itemData.type}</div>
+                <div>Weight: ${itemData.weight}kg</div>
+                <div>Size: ${itemData.width}x${itemData.height}</div>
+                <div>Price: $${itemData.price}</div>
+                <div>Durability: ${item.durability}%</div>
+            `;
+
+            document.body.appendChild(tooltip);
+            this.currentTooltip = tooltip;
+
+            const onMouseMove = (moveE) => {
+                if (this.currentTooltip) {
+                    tooltip.style.left = (moveE.clientX + 10) + 'px';
+                    tooltip.style.top = (moveE.clientY + 10) + 'px';
+                }
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            this.tooltipMoveListener = onMouseMove;
+        }
+
+        hideTooltip() {
+            if (this.currentTooltip && document.body.contains(this.currentTooltip)) {
+                document.body.removeChild(this.currentTooltip);
+            }
+            if (this.tooltipMoveListener) {
+                document.removeEventListener('mousemove', this.tooltipMoveListener);
+                this.tooltipMoveListener = null;
+            }
+            this.currentTooltip = null;
+        }
+    }
+
+    /**
+     * [4. Zombie 클래스]
+     */
+    class Zombie {
+        constructor(mesh, position) {
+            this.mesh = mesh;
+            this.position = position;
+            this.hp = 100;
+            this.state = 'IDLE';
+            this.detectionRange = 9;
+            this.speed = 0.05;
+            this.rotationSpeed = 0.01; // 애니메이션용 회전 속도
+        }
+
+        update(playerPos, deltaTime) {
+            // 애니메이션: 항상 약간 회전
+            this.mesh.rotation.y += this.rotationSpeed;
+
+            const dist = this.position.distanceTo(playerPos);
+            if (dist < this.detectionRange) {
+                this.state = 'CHASING';
+                const dir = new THREE.Vector3().subVectors(playerPos, this.position).normalize();
+                this.position.add(dir.multiplyScalar(this.speed));
+                this.mesh.position.copy(this.position);
+            }
+        }
+    }
+
+    /**
+     * [5. BuildingSystem 클래스]
+     */
+    class BuildingSystem {
+        constructor(scene) {
+            this.scene = scene;
+            this.buildings = [];
+            this.spawnBuildings();
+        }
+
+        spawnBuildings() {
+            // 주변에 여러 건물 배치
+            const buildingPositions = [
+                { pos: new THREE.Vector3(30, 5, 30), size: new THREE.Vector3(15, 10, 15), color: 0x666666 },
+                { pos: new THREE.Vector3(-40, 5, 20), size: new THREE.Vector3(12, 8, 12), color: 0x777777 },
+                { pos: new THREE.Vector3(50, 5, -30), size: new THREE.Vector3(15, 10, 15), color: 0x555555 },
+                { pos: new THREE.Vector3(-50, 5, -40), size: new THREE.Vector3(15, 10, 15), color: 0x888888 },
+                { pos: new THREE.Vector3(0, 5, 60), size: new THREE.Vector3(12, 8, 12), color: 0x666666 }
+            ];
+
+            buildingPositions.forEach(building => {
+                const mesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(building.size.x, building.size.y, building.size.z),
+                    new THREE.MeshStandardMaterial({ color: building.color })
+                );
+                mesh.position.copy(building.pos);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                this.scene.add(mesh);
+                this.buildings.push(mesh);
+            });
+        }
+    }
+
+    /**
+     * [6. FarmingSystem 클래스]
+     */
+    class FarmingSystem {
+        constructor(scene) {
+            this.scene = scene;
+            this.containers = [];
+            this.spawnContainers();
+        }
+
+        spawnContainers() {
+            for (let i = 0; i < 5; i++) {
+                const container = new THREE.Mesh(
+                    new THREE.BoxGeometry(2, 2, 2),
+                    new THREE.MeshStandardMaterial({ color: 0x8B4513 })
+                );
+                container.position.set(Math.random() * 100 - 50, 1, Math.random() * 100 - 50);
+                container.userData = { type: 'container', looted: false };
+                this.scene.add(container);
+                this.containers.push(container);
+            }
+        }
+
+        loot(container, player) {
+            if (!container.userData.looted) {
+                const items = Object.keys(ITEM_DATA);
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                player.inventory.addItem(randomItem);
+                container.userData.looted = true;
+                this.scene.remove(container);
+                console.log(`Looted: ${randomItem}`);
+            }
+        }
+    }
+
+    /**
+     * [7. ExtractionSystem 클래스]
+     */
+    class ExtractionSystem {
+        constructor(scene) {
+            this.scene = scene;
+            this.extractionPoint = null;
+            this.spawnExtractionPoint();
+        }
+
+        spawnExtractionPoint() {
+            this.extractionPoint = new THREE.Mesh(
+                new THREE.CylinderGeometry(2, 2, 1),
+                new THREE.MeshStandardMaterial({ color: 0x00FF00 })
+            );
+            this.extractionPoint.position.set(50, 0.5, 50);
+            this.scene.add(this.extractionPoint);
+        }
+
+        checkExtraction(playerPos, raidManager) {
+            if (this.extractionPoint && playerPos.distanceTo(this.extractionPoint.position) < 3) {
+                if (raidManager.timeLeft > 600) { // 10분 남았을 때만
+                    console.log("Extraction Successful!");
+                    raidManager.isExtracted = true;
+                    // 거점으로 전환 (UI 변경)
+                    document.getElementById('hud').innerHTML = '<div>SAFE ZONE</div>';
+                } else {
+                    console.log("Extraction Failed: Time not met");
+                }
+            }
+        }
+    }
+
+    /**
+     * [8. GameManager & RaidManager]
+     */
+    class RaidManager {
+        constructor() {
+            this.timeLeft = 1200; // 20분
+            this.isExtracted = false;
+            this.startTimer();
+        }
+
+        startTimer() {
+            setInterval(() => {
+                if(this.timeLeft > 0 && !this.isExtracted) this.timeLeft--;
+                document.getElementById('timer').innerText = `TIME: ${Math.floor(this.timeLeft / 60)}:${this.timeLeft % 60}`;
+                if (this.timeLeft <= 0 && !this.isExtracted) {
+                    console.log("Raid Failed!");
+                    // 아이템 손실
+                }
+            }, 1000);
+        }
+    }
+
+    /**
+     * [9. 메인 게임 엔진 클래스]
+     */
+    class SurvivalGame {
+        constructor(isLobby = false) {
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.controls = new PointerLockControls(this.camera, document.body);
+            this.isLobby = isLobby;
+            this.raidManager = isLobby ? null : new RaidManager();
+            this.player = new Player(this.camera, this.controls);
+            this.zombies = [];
+            this.farmingSystem = isLobby ? null : new FarmingSystem(this.scene);
+            this.buildingSystem = new BuildingSystem(this.scene);
+            this.extractionSystem = isLobby ? null : new ExtractionSystem(this.scene);
+            this.clock = new THREE.Clock();
+            this.weaponMesh = null;
+            this.lastEquippedWeaponId = null;
+            this.flashlight = null;
+            this.audioContext = null;
+            this.recoilRecovery = 0;
+            window.currentQuickSlot = 1;
+            window.currentGame = this;
+            
+            this.init();
+        }
+
+        init() {
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(this.renderer.domElement);
+            this.scene.add(this.camera);
+
+            // 조명 개선
+            const light = new THREE.DirectionalLight(0xffffff, 1.5);
+            light.position.set(50, 50, 50);
+            light.castShadow = true;
+            light.shadow.mapSize.width = 2048;
+            light.shadow.mapSize.height = 2048;
+            this.scene.add(light);
+            this.scene.add(new THREE.AmbientLight(0xcccccc, 1.0));
+
+            // 환경 (랜덤 시드 기반 맵 대용)
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(200, 200),
+                new THREE.MeshStandardMaterial({ color: 0x666666 })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            this.scene.add(floor);
+
+            if (!this.isLobby) {
+                // 좀비 AI 스폰 (예시)
+                this.spawnZombie(new THREE.Vector3(10, 0, -20));
+                this.spawnZombie(new THREE.Vector3(-10, 0, 20));
+                // HUD 표시
+                document.getElementById('hud').style.display = 'block';
+                document.getElementById('crosshair').style.display = 'block';
+            } else {
+                // 로비 메뉴 표시
+                document.getElementById('lobbyMenu').style.display = 'block';
+            }
+
+            this.setupInputs();
+            this.animate();
+        }
+
+        spawnZombie(pos) {
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 2, 1),
+                new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+            );
+            mesh.position.copy(pos);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            this.scene.add(mesh);
+            const zombie = new Zombie(mesh, pos);
+            this.zombies.push(zombie);
+        }
+
+        setupInputs() {
+            if (this.isLobby) {
+                // 로비: 일반 마우스 포인터 활성화, 버튼 클릭만 가능
+                document.body.style.cursor = 'auto';
+                return;
+            }
+
+            // 게임: PointerLockControls 활성화
+            this.controls.addEventListener('lock', () => console.log('Pointer locked'));
+            this.controls.addEventListener('unlock', () => console.log('Pointer unlocked'));
+
+            document.addEventListener('keydown', (e) => {
+                switch(e.key.toLowerCase()) {
+                    case 'w': this.player.keys.w = true; break;
+                    case 'a': this.player.keys.a = true; break;
+                    case 's': this.player.keys.s = true; break;
+                    case 'd': this.player.keys.d = true; break;
+                    case 'shift': this.player.isSprinting = true; break;
+                    case 'control': this.player.isCrouching = true; break;
+                    case 'i': 
+                        const invContainer = document.getElementById('inventoryContainer');
+                        if (invContainer.style.display === 'none' || invContainer.style.display === '') {
+                            invContainer.style.display = 'flex';
+                            document.body.style.cursor = 'auto';
+                            document.body.style.pointerEvents = 'auto';
+                            if (this.controls && this.controls.isLocked) this.controls.unlock();
+                        } else {
+                            invContainer.style.display = 'none';
+                            document.body.style.cursor = 'none';
+                            document.body.style.pointerEvents = 'auto';
+                            if (this.controls) this.controls.lock();
+                        }
+                        break;
+                    case 'e': this.interact(); break;
+                    case '1': this.selectQuickSlot(1); break;
+                    case '2': this.selectQuickSlot(2); break;
+                    case '3': this.selectQuickSlot(3); break;
+                    case 'v': this.handleUtilityAction(); break;
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                switch(e.key.toLowerCase()) {
+                    case 'w': this.player.keys.w = false; break;
+                    case 'a': this.player.keys.a = false; break;
+                    case 's': this.player.keys.s = false; break;
+                    case 'd': this.player.keys.d = false; break;
+                    case 'shift': this.player.isSprinting = false; break;
+                    case 'control': this.player.isCrouching = false; break;
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                const invContainer = document.getElementById('inventoryContainer');
+                if (invContainer.style.display === 'flex') return;
+                if (!this.controls.isLocked) this.controls.lock();
+                else this.shoot();
+            });
+        }
+
+        getQuickSlotItem(index) {
+            const equipped = JSON.parse(localStorage.getItem('equippedItems')) || {};
+            const id = index === 1 ? equipped.primary : index === 2 ? equipped.secondary : equipped.melee;
+            return id ? this.player.inventory.items.find(i => i.id === id) : null;
+        }
+
+        selectQuickSlot(index) {
+            window.currentQuickSlot = index;
+            this.player.inventory.updateUI();
+            console.log(`Quick slot ${index} selected`);
+        }
+
+        handleUtilityAction() {
+            const meleeItem = this.getQuickSlotItem(3);
+            if (meleeItem && meleeItem.itemKey === 'flashlight') {
+                this.toggleFlashlight();
+                return;
+            }
+
+            const medkit = this.player.inventory.items.find(i => i.itemKey === 'medkit');
+            if (medkit) {
+                this.player.hp = Math.min(100, this.player.hp + 50);
+                this.player.inventory.removeItem(medkit.id);
+                this.player.inventory.updateUI();
+                console.log('Medkit used');
+                return;
+            }
+
+            console.log('No utility item available.');
+        }
+
+        toggleFlashlight() {
+            if (!this.flashlight) {
+                this.flashlight = new THREE.SpotLight(0xffffff, 1, 30, Math.PI / 8, 0.5, 1);
+                this.flashlight.position.set(0, -0.1, -0.5);
+                this.camera.add(this.flashlight);
+            }
+            this.flashlight.visible = !this.flashlight.visible;
+            console.log(`Flashlight ${this.flashlight.visible ? 'ON' : 'OFF'}`);
+        }
+
+        ensureAudioContext() {
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        playSound(frequency, duration = 0.08, type = 'square') {
+            this.ensureAudioContext();
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+            osc.type = type;
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+            gain.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+            osc.start();
+            osc.stop(this.audioContext.currentTime + duration);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        }
+
+        playGunshotSound() {
+            this.playSound(900, 0.05, 'square');
+            this.playSound(1400, 0.08, 'triangle');
+        }
+
+        playZombieHitFeedback() {
+            this.playSound(200, 0.12, 'sawtooth');
+            const flash = document.createElement('div');
+            flash.style.position = 'fixed';
+            flash.style.left = '0';
+            flash.style.top = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.backgroundColor = 'rgba(255, 0, 0, 0.18)';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '9999';
+            document.body.appendChild(flash);
+            setTimeout(() => {
+                if (document.body.contains(flash)) document.body.removeChild(flash);
+            }, 120);
+        }
+
+        shoot() {
+            const slotIndex = window.currentQuickSlot || 1;
+            const selectedItem = this.getQuickSlotItem(slotIndex);
+            if (!selectedItem) {
+                console.log('No item selected for this slot');
+                return;
+            }
+
+            if (slotIndex === 3) {
+                if (selectedItem.itemKey === 'bat') {
+                    this.meleeAttack();
+                } else {
+                    console.log('Selected slot is a tool, use V to activate it.');
+                }
+                return;
+            }
+
+            if (!['pistol', 'rifle'].includes(selectedItem.itemKey)) {
+                console.log('Selected slot does not contain a firearm');
+                return;
+            }
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+
+            this.playGunshotSound();
+            this.recoilRecovery += WEAPON_DATA.recoil;
+            const newPitch = this.camera.rotation.x + WEAPON_DATA.recoil;
+            this.camera.rotation.x = THREE.MathUtils.clamp(newPitch, -Math.PI / 2, Math.PI / 2);
+
+            const intersects = raycaster.intersectObjects(this.zombies.map(z => z.mesh));
+            if (intersects.length > 0) {
+                const targetZombie = this.zombies.find(z => z.mesh === intersects[0].object);
+                targetZombie.hp -= WEAPON_DATA.damage;
+                console.log('Hit! Zombie HP:', targetZombie.hp);
+                if (targetZombie.hp <= 0) {
+                    this.scene.remove(targetZombie.mesh);
+                    this.zombies.splice(this.zombies.indexOf(targetZombie), 1);
+                    this.playZombieHitFeedback();
+                }
+            }
+        }
+
+        interact() {
+            if (!this.farmingSystem) return;
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+            
+            const intersects = raycaster.intersectObjects(this.farmingSystem.containers);
+            if (intersects.length > 0) {
+                this.farmingSystem.loot(intersects[0].object, this.player);
+            }
+        }
+
+        meleeAttack() {
+            const equipped = JSON.parse(localStorage.getItem('equippedItems')) || {};
+            const meleeWeapon = equipped.melee ? this.player.inventory.items.find(i => i.id === equipped.melee) : null;
+            
+            if (!meleeWeapon || meleeWeapon.itemKey !== 'bat') {
+                console.log('No bat equipped!');
+                return;
+            }
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+            
+            const intersects = raycaster.intersectObjects(this.zombies.map(z => z.mesh));
+            if (intersects.length > 0) {
+                const targetZombie = this.zombies.find(z => z.mesh === intersects[0].object);
+                if (this.camera.position.distanceTo(targetZombie.position) < 3) {
+                    targetZombie.hp -= 50; // 배트 데미지
+                    console.log('Melee Hit! Zombie HP:', targetZombie.hp);
+                    this.playSound(180, 0.08, 'square');
+                    if(targetZombie.hp <= 0) {
+                        this.scene.remove(targetZombie.mesh);
+                        this.zombies.splice(this.zombies.indexOf(targetZombie), 1);
+                        this.playZombieHitFeedback();
+                    }
+                }
+            }
+        }
+
+        updateWeaponModel() {
+            const equipped = JSON.parse(localStorage.getItem('equippedItems')) || {};
+            const slotIndex = window.currentQuickSlot || 1;
+            let activeItem = null;
+            if (slotIndex === 1) activeItem = equipped.primary ? this.player.inventory.items.find(i => i.id === equipped.primary) : null;
+            if (slotIndex === 2) activeItem = equipped.secondary ? this.player.inventory.items.find(i => i.id === equipped.secondary) : null;
+            if (slotIndex === 3) activeItem = equipped.melee ? this.player.inventory.items.find(i => i.id === equipped.melee) : null;
+            const weaponId = activeItem ? activeItem.id : null;
+
+            if (this.lastEquippedWeaponId === weaponId) return;
+            this.lastEquippedWeaponId = weaponId;
+
+            if (this.weaponMesh) {
+                this.camera.remove(this.weaponMesh);
+                this.weaponMesh = null;
+            }
+
+            if (!activeItem) return;
+
+            const itemData = ITEM_DATA[activeItem.itemKey];
+            let geometry;
+            let material = new THREE.MeshStandardMaterial({ color: itemData.type === 'weapon' ? 0x222222 : 0x777777 });
+
+            if (activeItem.itemKey === 'rifle') {
+                geometry = new THREE.BoxGeometry(0.05, 0.05, 0.6);
+            } else if (activeItem.itemKey === 'pistol') {
+                geometry = new THREE.BoxGeometry(0.05, 0.03, 0.2);
+            } else if (activeItem.itemKey === 'bat') {
+                geometry = new THREE.BoxGeometry(0.05, 0.05, 0.5);
+            } else if (activeItem.itemKey === 'flashlight') {
+                geometry = new THREE.BoxGeometry(0.05, 0.05, 0.25);
+            } else {
+                geometry = new THREE.BoxGeometry(0.05, 0.05, 0.2);
+            }
+
+            const weaponMesh = new THREE.Mesh(geometry, material);
+            weaponMesh.position.set(0.3, -0.2, -0.5);
+            weaponMesh.rotation.set(-0.2, 0.2, 0);
+            weaponMesh.castShadow = false;
+            weaponMesh.receiveShadow = false;
+            this.camera.add(weaponMesh);
+            this.weaponMesh = weaponMesh;
+        }
+
+        animate() {
+            requestAnimationFrame(() => this.animate());
+            const deltaTime = this.clock.getDelta();
+            
+            this.player.update(deltaTime);
+            this.updateWeaponModel();
+
+            if (this.recoilRecovery > 0) {
+                const recoverAmount = Math.min(this.recoilRecovery, 2.5 * deltaTime);
+                this.camera.rotation.x = THREE.MathUtils.clamp(this.camera.rotation.x - recoverAmount, -Math.PI / 2, Math.PI / 2);
+                this.recoilRecovery -= recoverAmount;
+            }
+            
+            if (!this.isLobby) {
+                // AI Logic (간단한 추적)
+                this.zombies.forEach(zombie => {
+                    zombie.update(this.camera.position, deltaTime);
+                    // 플레이어와 가까우면 공격
+                    if (zombie.position.distanceTo(this.camera.position) < 2) {
+                        this.player.takeDamage(10);
+                    }
+                });
+
+                // 탈출 체크
+                this.extractionSystem.checkExtraction(this.camera.position, this.raidManager);
+            }
+
+            this.renderer.render(this.scene, this.camera);
+        }
+    }
+
+    // 로비 로직
+    let game;
+    let lobbyGame;
+    
+    window.buyItemInLobby = function(item) {
+        if (lobbyGame) {
+            lobbyGame.player.inventory.buyItem(item, lobbyGame.player);
+            document.getElementById('playerMoney').innerText = lobbyGame.player.money;
+        }
+    };
+
+    window.startGame = function() {
+        document.getElementById('lobbyMenu').style.display = 'none';
+        if (lobbyGame) {
+            lobbyGame.renderer.domElement.remove();
+        }
+        
+        // 실제 게임 시작
+        game = new SurvivalGame(false);
+        
+        // 로비 게임에서 구매한 아이템 이전
+        if (lobbyGame) {
+            lobbyGame.player.inventory.items.forEach(item => {
+                game.player.inventory.addItem(item.itemKey);
+            });
+            game.player.inventory.currentWeight = lobbyGame.player.inventory.currentWeight;
+            game.player.money = lobbyGame.player.money;
+        }
+        
+        // 초기 아이템: 작은 가방과 야구 방망이
+        game.player.inventory.addItem('smallBackpack');
+        game.player.inventory.addItem('bat');
+        
+        // 총이 있으면 hasWeapon true
+        const hasWeapon = game.player.inventory.items.some(item => item.itemKey === 'pistol' || item.itemKey === 'rifle');
+        if (hasWeapon) {
+            game.player.hasWeapon = true;
+        }
+        
+        game.player.inventory.updateUI();
+    };
+    
+    // 로비 초기화
+    window.addEventListener('load', function() {
+        lobbyGame = new SurvivalGame(true);
+        lobbyGame.player.money = 200;
+        document.getElementById('playerMoney').innerText = '200';
+    });
+</script>
+</body>
+</html>
