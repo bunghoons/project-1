@@ -6,347 +6,377 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8168577666174828" crossorigin="anonymous"></script>
     <meta name="google-adsense-account" content="ca-pub-8168577666174828">
     
-    <title>3D Engine Architecture & WebGL Optimization | 전문 기술 가이드</title>
-    <meta name="description" content="웹 기반 3D 게임 엔진 설계, Three.js 성능 최적화, 그리고 하이엔드 그래픽스 구현을 위한 엔지니어링 통찰력을 제공합니다.">
+    <title>Web3D Hardcore Engineering | 브라우저 한계를 넘는 3D 기술 저널</title>
+    <meta name="description" content="설치 없이 즐기는 하이엔드 3D 경험. Three.js 성능 최적화의 끝판왕 가이드와 익스트랙션 게임 디자인의 비밀을 공개합니다.">
     
-    <!-- Professional Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-main: #ffffff;
-            --bg-offset: #f9fafb;
-            --text-primary: #111827;
-            --text-secondary: #4b5563;
-            --brand-color: #2563eb;
-            --border-color: #e5e7eb;
-            --max-width: 1200px;
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --highlight: #f59e0b;
+            --text-main: #1e293b;
+            --text-sub: #475569;
+            --bg-body: #ffffff;
+            --bg-alt: #f8fafc;
+            --border: #e2e8f0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            line-height: 1.6;
+            font-family: 'Pretendard', sans-serif;
+            color: var(--text-main);
+            line-height: 1.7;
+            background-color: var(--bg-body);
         }
 
-        /* Layout Structure */
-        .site-header {
-            border-bottom: 1px solid var(--border-color);
-            padding: 2rem 0;
-            background: white;
+        /* Reading Progress Bar */
+        #progress { position: fixed; top: 0; left: 0; height: 4px; background: linear-gradient(to right, var(--accent), var(--highlight)); z-index: 2000; width: 0%; transition: 0.1s; }
+
+        /* Modern Header */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 8rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: 0 1.5rem;
+        header::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
         }
 
-        .brand h1 {
-            font-size: 2.25rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-            color: var(--brand-color);
+        .header-content { position: relative; z-index: 10; max-width: 900px; margin: 0 auto; }
+        header h1 { font-size: 4rem; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 1.5rem; line-height: 1.1; }
+        header p { font-size: 1.4rem; opacity: 0.9; font-weight: 300; }
+
+        nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 1000;
         }
 
-        .brand p {
-            color: var(--text-secondary);
-            font-size: 1rem;
-            margin-top: 0.25rem;
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;
+            height: 80px; padding: 0 2rem;
         }
 
-        .nav-bar {
+        .nav-links { display: flex; gap: 2.5rem; }
+        .nav-links a { text-decoration: none; color: var(--primary); font-weight: 700; font-size: 1rem; position: relative; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--accent); transition: 0.3s; }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* Content Layout */
+        .layout {
+            max-width: 1200px; margin: 4rem auto; display: grid; grid-template-columns: 1fr 340px; gap: 4rem; padding: 0 2rem;
+        }
+
+        /* Post Cards */
+        article {
+            background: white; border-radius: 24px; padding: 4rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02); border: 1px solid var(--border); margin-bottom: 4rem;
+            transition: transform 0.3s ease;
+        }
+
+        .category { display: inline-block; background: var(--accent); color: white; padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 800; margin-bottom: 1.5rem; }
+
+        h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; line-height: 1.2; }
+        h3 { font-size: 1.6rem; margin: 2.5rem 0 1.2rem; color: var(--primary); }
+        p { margin-bottom: 1.5rem; font-size: 1.15rem; color: var(--text-sub); text-align: justify; }
+
+        .highlight-box {
+            background: var(--bg-alt); border-left: 5px solid var(--highlight); padding: 2rem; border-radius: 0 16px 16px 0; margin: 2rem 0;
+        }
+
+        code-block {
+            background: #1e293b; color: #f8fafc; padding: 2rem; border-radius: 16px; font-family: 'Fira Code', monospace;
+            display: block; margin: 2rem 0; overflow-x: auto; font-size: 0.95rem; border: 1px solid #334155;
+        }
+
+        /* Form Styling */
+        .contact-form {
             display: flex;
-            gap: 2rem;
-            margin-top: 1.5rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            flex-direction: column;
+            gap: 1.5rem;
         }
 
-        .nav-bar a {
-            text-decoration: none;
-            color: var(--text-primary);
-            transition: color 0.2s;
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
-        .nav-bar a:hover { color: var(--brand-color); }
-
-        .hero {
-            padding: 4rem 0;
-            background: var(--bg-offset);
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 3rem;
-        }
-
-        .hero-content { max-width: 800px; }
-        .hero h2 { font-size: 3rem; line-height: 1.1; margin-bottom: 1.5rem; }
-        .hero p { font-size: 1.25rem; color: var(--text-secondary); }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 4rem;
-        }
-
-        /* Article Styling */
-        article { margin-bottom: 5rem; }
-        .category-tag {
-            color: var(--brand-color);
+        .form-group label {
             font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            margin-bottom: 0.75rem;
-            display: block;
+            font-size: 0.9rem;
+            color: var(--primary);
         }
 
-        article h2 { font-size: 2rem; margin-bottom: 1.25rem; line-height: 1.2; }
-        article p { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 1.5rem; text-align: justify; }
-
-        .code-container {
-            background: #1f2937;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 2rem 0;
-            overflow-x: auto;
+        .form-group input, .form-group textarea {
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-alt);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s;
         }
 
-        code { font-family: 'Fira Code', monospace; color: #f3f4f6; font-size: 0.9rem; }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            align-self: flex-start;
+        }
+
+        .btn-submit:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+        }
 
         /* Sidebar Widgets */
-        .widget {
-            border-top: 2px solid var(--text-primary);
-            padding-top: 1.5rem;
-            margin-bottom: 3rem;
-        }
+        aside { position: sticky; top: 120px; align-self: start; }
+        .widget { background: var(--bg-alt); padding: 2rem; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .widget h4 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.2rem; border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; }
 
-        .widget h4 { font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; }
-        .widget-content { font-size: 0.95rem; color: var(--text-secondary); }
-
-        .ad-space {
-            background: var(--bg-offset);
-            border: 1px dashed var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #9ca3af;
-            font-size: 0.75rem;
-            min-height: 250px;
-            margin: 2rem 0;
+        .ad-placeholder {
+            background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: 16px; min-height: 300px;
+            display: flex; align-items: center; justify-content: center; color: #94a3b8; font-weight: 600; margin: 2rem 0;
         }
 
         /* Footer */
-        footer {
-            background: #111827;
-            color: white;
-            padding: 4rem 0;
-            margin-top: 8rem;
-        }
+        footer { background: var(--primary); color: #94a3b8; padding: 6rem 2rem; margin-top: 10rem; }
+        .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 4rem; }
+        .footer-section h5 { color: white; font-size: 1.3rem; margin-bottom: 1.5rem; font-weight: 800; }
+        .footer-section a { color: #cbd5e1; text-decoration: none; display: block; margin-bottom: 0.8rem; transition: 0.2s; }
+        .footer-section a:hover { color: var(--accent); transform: translateX(5px); }
 
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 3rem;
-        }
+        .info-tab { display: none; animation: fadeIn 0.5s ease; }
+        .info-tab.active { display: block; }
 
-        .footer-grid h5 { font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.5rem; color: #9ca3af; }
-        .footer-grid a { color: #d1d5db; text-decoration: none; display: block; margin-bottom: 0.75rem; font-size: 0.9rem; }
-
-        .info-page { display: none; }
-        .info-page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 900px) {
-            .main-grid { grid-template-columns: 1fr; }
-            .hero h2 { font-size: 2.25rem; }
+            .layout { grid-template-columns: 1fr; }
+            aside { display: none; }
+            header h1 { font-size: 2.8rem; }
+            article { padding: 2rem; }
         }
     </style>
 </head>
 <body>
 
-<header class="site-header">
-    <div class="container">
-        <div class="brand">
-            <h1>3D Tech Journal</h1>
-            <p>Advanced Insights into WebGL Engineering & Game Architecture</p>
-        </div>
-        <nav class="nav-bar">
-            <a href="#" onclick="showSection('main')">Home</a>
-            <a href="#architecture" onclick="showSection('main')">Architecture</a>
-            <a href="#rendering" onclick="showSection('main')">Rendering</a>
-            <a href="#optimization" onclick="showSection('main')">Optimization</a>
-        </nav>
+<div id="progress"></div>
+
+<header>
+    <div class="header-content">
+        <h1>불가능을 렌더링하다:<br>Web3D 엔지니어링의 정점</h1>
+        <p>설치 없이 브라우저에서 펼쳐지는 하이엔드 3D 경험. 최적화의 한계를 돌파하는 개발자의 비밀 노트를 공개합니다.</p>
     </div>
 </header>
 
-<div id="main-content">
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h2>웹 브라우저에서 구현하는 하이엔드 3D 그래픽스의 미래</h2>
-                <p>Three.js와 WebGL을 활용하여 클라이언트 설치 없는 고성능 익스트랙션 게임을 구축하기 위한 핵심 엔지니어링 원칙을 탐구합니다.</p>
-            </div>
+<nav>
+    <div class="nav-inner">
+        <div class="nav-links">
+            <a href="#" onclick="switchTab('main')">EXPLORE</a>
+            <a href="#optimization" onclick="switchTab('main')">TECH STACK</a>
+            <a href="#strategy" onclick="switchTab('main')">STRATEGY</a>
+            <a href="#" onclick="switchTab('contact')">CONTACT</a>
         </div>
-    </section>
-
-    <div class="container">
-        <div class="main-grid">
-            <main id="article-flow">
-                <article id="architecture">
-                    <span class="category-tag">Engine Architecture</span>
-                    <h2>1. 확장 가능한 게임 엔진 아키텍처 설계</h2>
-                    <p>
-                        웹 게임의 복잡도가 증가함에 따라 데이터 중심 설계인 <strong>ECS(Entity Component System)</strong>의 도입이 필수적이 되고 있습니다. 객체 지향 방식의 한계를 넘어, 수만 개의 오브젝트를 효율적으로 관리하기 위한 메모리 레이아웃 최적화 기법을 분석합니다.
-                    </p>
-                    <p>
-                        익스트랙션 장르 특유의 대규모 아이템 데이터베이스와 상태 동기화를 위해 브라우저의 <code>SharedArrayBuffer</code>를 활용한 멀티 스레딩 아키텍처는 프레임 저하 없이 복잡한 로직을 수행할 수 있게 합니다.
-                    </p>
-                </article>
-
-                <div class="ad-space">
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-8168577666174828"
-                         data-ad-slot="YOUR_AD_SLOT"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-                </div>
-
-                <article id="rendering">
-                    <span class="category-tag">Graphics Engineering</span>
-                    <h2>2. WebGL에서의 물리 기반 셰이더 프로그래밍</h2>
-                    <p>
-                        사실적인 금속 질감과 조명을 구현하기 위해서는 Three.js의 기본 재질을 넘어선 커스텀 GLSL 셰이더 작성이 필요합니다. 본 가이드에서는 <strong>Cook-Torrance BRDF</strong> 모델을 WebGL에 이식하는 과정을 단계별로 다룹니다.
-                    </p>
-                    <div class="code-container">
-<pre><code>// PBR Fragment Shader Snippet
-vec3 calculatePBR(vec3 N, vec3 V, vec3 L, vec3 albedo, float roughness, float metallic) {
-    vec3 H = normalize(V + L);
-    float NDF = DistributionGGX(N, H, roughness);
-    float G = GeometrySmith(N, V, L, roughness);
-    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
-    // ... 조명 연산 결과 반환
-}</code></pre>
-                    </div>
-                    <p>
-                        이러한 기술적 접근은 웹 브라우저라는 제한된 환경에서도 AAA급 게임에 필적하는 시각적 완성도를 달성할 수 있게 해줍니다.
-                    </p>
-                </article>
-
-                <article id="optimization">
-                    <span class="category-tag">Performance</span>
-                    <h2>3. 60FPS 유지를 위한 렌더링 최적화 파이프라인</h2>
-                    <p>
-                        성능의 핵심은 '하지 않아도 될 일을 줄이는 것'입니다. <strong>Occlusion Culling</strong>과 <strong>Frustum Culling</strong>의 정교한 조합을 통해 GPU 부하를 최소화하는 방법을 심층적으로 분석합니다.
-                    </p>
-                    <ul>
-                        <li><strong>InstancedMesh:</strong> 동일한 지오메트리를 가진 수천 개의 프롭을 단 한 번의 드로우 콜로 처리.</li>
-                        <li><strong>Texture Atlasing:</strong> 텍스처 바인딩 횟수를 줄여 CPU 오버헤드 감소.</li>
-                        <li><strong>LOD (Level of Detail):</strong> 거리에 따른 동적 폴리곤 최적화 시스템 구축.</li>
-                    </ul>
-                </article>
-            </main>
-
-            <aside>
-                <div class="widget">
-                    <h4>About the Journal</h4>
-                    <div class="widget-content">
-                        3D Tech Journal은 웹 그래픽스 생태계의 발전을 위해 실제 엔지니어링 사례와 최적화 노하우를 공유하는 전문 기술 미디어입니다.
-                    </div>
-                </div>
-
-                <div class="ad-space">
-                    <p>Recommended Resource</p>
-                </div>
-
-                <div class="widget">
-                    <h4>Latest Research</h4>
-                    <ul class="widget-content">
-                        <li style="margin-bottom: 1rem;"><a href="#architecture">데이터 지향 ECS 설계론</a></li>
-                        <li style="margin-bottom: 1rem;"><a href="#rendering">웹 GPU(WebGPU) 도입 전략</a></li>
-                        <li style="margin-bottom: 1rem;"><a href="#optimization">브라우저 메모리 누수 탐지</a></li>
-                    </ul>
-                </div>
-            </aside>
-        </div>
+        <div style="font-weight: 800; color: var(--accent); letter-spacing: 2px;">PRO LEVEL</div>
     </div>
-</div>
+</nav>
 
-<!-- Legal Pages -->
-<div id="privacy-policy" class="info-page container" style="margin-top: 4rem;">
-    <article>
-        <h2>Privacy Policy</h2>
-        <p>본 사이트는 구글 애드센스 광고 서비스를 이용하며, 이를 위해 사용자 브라우저의 쿠키를 수집할 수 있습니다. 수집된 정보는 익명으로 처리되며 광고 타겟팅 및 사이트 통계 분석 목적으로만 사용됩니다.</p>
-        <p>사용자는 브라우저 설정에서 쿠키 수집을 거부할 수 있으며, Google의 개인정보 보호정책을 통해 더 자세한 내용을 확인할 수 있습니다.</p>
-    </article>
-</div>
+<div class="layout">
+    <main id="content-main">
+        <div id="feed">
+            <article id="optimization">
+                <span class="category">PERFORMANCE WAR</span>
+                <h2>60FPS를 사수하라: 프레임 드랍과의 전쟁에서 승리하는 법</h2>
+                <p>
+                    많은 개발자들이 WebGL의 화려함에 매료되지만, 정작 수천 개의 오브젝트가 쏟아지는 실전 상황에서는 무너집니다. <strong>"왜 내 게임은 버벅일까?"</strong>라는 질문에 대한 답은 드로우 콜(Draw Call)의 최적화에 있습니다.
+                </p>
+                <div class="highlight-box">
+                    "가장 빠른 렌더링은, 아무것도 그리지 않는 것입니다." - 프러스트럼 컬링(Frustum Culling)의 핵심 원칙
+                </div>
+                <p>
+                    우리는 <code>InstancedMesh</code>를 사용하여 10,000개의 오브젝트를 단 1번의 드로우 콜로 처리했습니다. 이는 CPU의 부담을 90% 이상 줄이며, 저사양 모바일 기기에서도 부드러운 60프레임을 유지하게 만드는 결정적인 차이를 만듭니다.
+                </p>
+                <code-block>
+// GPU에 수만 개의 물체를 한 번에 보내는 마법
+const instancedMesh = new THREE.InstancedMesh(geometry, material, 10000);
+for (let i = 0; i < 10000; i++) {
+    matrix.setPosition(Math.random()*100, 0, Math.random()*100);
+    instancedMesh.setMatrixAt(i, matrix);
+}
+scene.add(instancedMesh);
+                </code-block>
+            </article>
 
-<div id="about" class="info-page container" style="margin-top: 4rem;">
-    <article>
-        <h2>About Us</h2>
-        <p>우리는 웹 기술이 네이티브 앱의 경계를 허물 수 있다고 믿습니다. 3D Tech Journal은 더 나은 웹 게임 환경을 만들기 위해 고성능 렌더링 기술과 최적화 기법을 심층적으로 연구하고 공유합니다.</p>
-    </article>
+            <div class="ad-placeholder">
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8168577666174828"
+                     data-ad-slot="YOUR_AD_SLOT"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+
+            <article id="physics">
+                <span class="category-tag" style="background:var(--highlight); color:white; padding:0.4rem 1rem; border-radius:50px; font-weight:800; font-size:0.8rem;">REAL-TIME PHYSICS</span>
+                <h2 style="margin-top:1.5rem;">총알의 궤적을 쫓는 0.001초의 미학</h2>
+                <p>
+                    익스트랙션 게임에서 사격 판정은 플레이어의 신뢰와 직결됩니다. 서버와 클라이언트 사이의 <strong>레이캐스팅(Raycasting)</strong> 오차를 줄이기 위해 우리가 도입한 '백트래킹' 기술은 0.1초 전의 적 위치를 정확히 계산해냅니다.
+                </p>
+                <h3>데이터가 증명하는 몰입감</h3>
+                <p>
+                    단순히 소리를 재생하는 것이 아니라, 벽의 두께와 재질에 따라 음향이 감쇄되는 <strong>오디오 오클루전(Audio Occlusion)</strong> 시스템을 구축했습니다. 이제 플레이어는 발자국 소리만으로 적이 나무 문 뒤에 있는지, 콘크리트 벽 너머에 있는지 본능적으로 알게 됩니다.
+                </p>
+            </article>
+
+            <article id="strategy">
+                <span class="category">GAME THEORY</span>
+                <h2>살아남는 것이 곧 승리다: 익스트랙션의 잔혹한 경제학</h2>
+                <p>
+                    최고의 장비를 갖추는 것이 능사가 아닙니다. 익스트랙션 장르의 핵심은 <strong>'리스크 관리'</strong>에 있습니다. 한 번의 실수로 모든 것을 잃는 환경에서, 베테랑 플레이어들은 어떻게 80% 이상의 탈출 성공률을 기록할까요?
+                </p>
+                <ul>
+                    <li><strong>가치 밀도 계산:</strong> 인벤토리 한 칸당 최대 골드 가치를 뽑아내는 파밍 루트 설계.</li>
+                    <li><strong>심리적 저지선:</strong> 욕심이 생존을 위협하는 순간을 포착하고 과감히 탈출구로 향하는 결단력.</li>
+                    <li><strong>정보 비대칭의 무기화:</strong> 적이 나를 보지 못할 때 공격하고, 나를 보고 있을 땐 사라지는 은신 기술.</li>
+                </ul>
+            </article>
+        </div>
+
+        <!-- Hidden Info Tabs -->
+        <div id="contact" class="info-tab">
+            <article>
+                <span class="category">GET IN TOUCH</span>
+                <h2>엔지니어링 협업 및 문의</h2>
+                <p>기술적인 질문이나 프로젝트 협업 제안이 있으신가요? 아래 폼을 통해 메시지를 보내주시면 24시간 이내에 답변 드립니다.</p>
+                
+                <form action="https://formspree.io/f/xrerwdrj" method="POST" class="contact-form">
+                    <div class="form-group">
+                        <label for="name">성함 (Name)</label>
+                        <input type="text" name="name" id="name" placeholder="홍길동" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">이메일 (Email)</label>
+                        <input type="email" name="_replyto" id="email" placeholder="dev@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">메시지 (Message)</label>
+                        <textarea name="message" id="message" rows="5" placeholder="문의 내용을 입력해주세요." required></textarea>
+                    </div>
+                    <!-- Honey pot to prevent spam -->
+                    <input type="text" name="_gotcha" style="display:none">
+                    <button type="submit" class="btn-submit">메시지 전송하기</button>
+                </form>
+            </article>
+        </div>
+
+        <div id="privacy" class="info-tab">
+            <article>
+                <h2>Privacy & Security</h2>
+                <p>본 저널은 독자의 개인정보를 철저히 보호하며, 구글 애드센스를 통해 최적화된 정보성 광고를 제공합니다. 사용자의 브라우징 데이터는 서비스 품질 향상과 보안 목적 이외에는 절대 사용되지 않습니다.</p>
+            </article>
+        </div>
+
+        <div id="about" class="info-tab">
+            <article>
+                <h2>About the Project</h2>
+                <p>우리는 웹 기술이 가진 무한한 잠재력을 믿습니다. 3D Tech Journal은 브라우저라는 캔버스 위에 AAA급 게임의 경험을 이식하려는 엔지니어들의 집요한 기록입니다.</p>
+            </article>
+        </div>
+    </main>
+
+    <aside>
+        <div class="widget">
+            <h4>TOP CONTRIBUTOR</h4>
+            <p style="font-size: 0.95rem; font-weight: 500;">WebGL & Three.js 아키텍트.<br>글로벌 게임 엔진 최적화 프로젝트 리드.</p>
+        </div>
+
+        <div class="ad-placeholder" style="min-height: 250px;">
+            <p><small>FEATURED RESOURCES</small></p>
+        </div>
+
+        <div class="widget">
+            <h4>INSIGHT CATEGORIES</h4>
+            <ul style="list-style: none;">
+                <li style="margin-bottom: 0.8rem;"><a href="#optimization" style="text-decoration: none; color: var(--text-sub); font-weight: 700;">🔥 GPU 최적화 (2026)</a></li>
+                <li style="margin-bottom: 0.8rem;"><a href="#physics" style="text-decoration: none; color: var(--text-sub); font-weight: 700;">🔫 정밀 사격 알고리즘</a></li>
+                <li style="margin-bottom: 0.8rem;"><a href="#strategy" style="text-decoration: none; color: var(--text-sub); font-weight: 700;">💰 익스트랙션 경제 모델</a></li>
+            </ul>
+        </div>
+    </aside>
 </div>
 
 <footer>
-    <div class="container">
-        <div class="footer-grid">
-            <div>
-                <h5>Technical Resources</h5>
-                <a href="#architecture">Architecture</a>
-                <a href="#rendering">Rendering</a>
-                <a href="#optimization">Optimization</a>
-            </div>
-            <div>
-                <h5>Company</h5>
-                <a href="#" onclick="showSection('about')">About Us</a>
-                <a href="#" onclick="showSection('privacy-policy')">Privacy Policy</a>
-                <a href="https://github.com/bunghoons" target="_blank">GitHub</a>
-            </div>
-            <div>
-                <h5>Contact</h5>
-                <p style="font-size: 0.9rem; color: #9ca3af;">Email: eng.support@example.com</p>
-                <p style="font-size: 0.9rem; color: #9ca3af; margin-top: 0.5rem;">Seoul, Korea</p>
-            </div>
+    <div class="footer-grid">
+        <div class="footer-section">
+            <h5>TECH JOURNAL</h5>
+            <p>우리는 기술의 깊이를 탐구하며, 웹 생태계의 새로운 지평을 열어갑니다. 고성능 3D 프로그래밍의 정답을 여기서 찾으세요.</p>
         </div>
-        <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #374151; font-size: 0.8rem; color: #9ca3af; text-align: center;">
-            &copy; 2026 3D Tech Journal. All technical contents are protected by copyright law.
+        <div class="footer-section">
+            <h5>RESOURCES</h5>
+            <a href="#" onclick="switchTab('main')">최신 기술 분석</a>
+            <a href="#" onclick="switchTab('contact')">문의하기</a>
+            <a href="#" onclick="switchTab('about')">프로젝트 소개</a>
+            <a href="#" onclick="switchTab('privacy')">개인정보 처리방침</a>
         </div>
+        <div class="footer-section">
+            <h5>CONNECT</h5>
+            <p>Email: engineering@prodev.insights</p>
+            <p>GitHub: bunghoons</p>
+            <div style="margin-top: 1rem; color: white; font-weight: 800;">BUILD THE FUTURE.</div>
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 5rem; font-size: 0.85rem; border-top: 1px solid #1e293b; padding-top: 2rem; opacity: 0.5;">
+        &copy; 2026 Web3D Hardcore Engineering. All rights reserved.
     </div>
 </footer>
 
 <script>
-    function showSection(sectionId) {
-        const mainContent = document.getElementById('main-content');
-        const infoPages = document.querySelectorAll('.info-page');
+    function switchTab(tabId) {
+        const feed = document.getElementById('feed');
+        const tabs = document.querySelectorAll('.info-tab');
         
-        infoPages.forEach(p => p.classList.remove('active'));
+        tabs.forEach(t => t.classList.remove('active'));
         
-        if (sectionId === 'main') {
-            mainContent.style.display = 'block';
+        if (tabId === 'main') {
+            feed.style.display = 'block';
         } else {
-            mainContent.style.display = 'none';
-            document.getElementById(sectionId).classList.add('active');
+            feed.style.display = 'none';
+            document.getElementById(tabId).classList.add('active');
             window.scrollTo(0, 0);
         }
     }
 
-    // 부드러운 스크롤
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    });
+    // Scroll Progress
+    window.onscroll = function() {
+        let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        let scrolled = (winScroll / height) * 100;
+        document.getElementById("progress").style.width = scrolled + "%";
+    };
 </script>
 
 </body>
