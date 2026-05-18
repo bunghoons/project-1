@@ -3,301 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Google AdSense Verification -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8168577666174828" crossorigin="anonymous"></script>
-    <meta name="google-adsense-account" content="ca-pub-8168577666174828">
-    
     <title>AI Arbitrage Lab | 고품질 콘텐츠 엔지니어링 및 수익화 전략</title>
-    <meta name="description" content="AI를 도구로 활용하여 사용자에게 고유한 가치를 제공하는 방법. 문제 해결형 콘텐츠 설계부터 애드센스 수익 극대화까지, 실제 경험 기반의 전문 가이드를 제공합니다.">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Pretendard:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-blue: #1d4ed8;
-            --deep-slate: #0f172a;
-            --text-body: #334155;
-            --text-light: #64748b;
-            --bg-offwhite: #f8fafc;
-            --border-soft: #e2e8f0;
-            --max-width: 1200px;
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --text-main: #334155;
+            --bg-light: #f8fafc;
+            --white: #ffffff;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Pretendard', sans-serif; color: var(--deep-slate); line-height: 1.8; background-color: #fff; word-break: keep-all; }
+        body { 
+            font-family: 'Inter', 'Noto Sans KR', sans-serif; 
+            line-height: 1.7; 
+            color: var(--text-main); 
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
 
-        /* Reading Progress Bar */
-        #progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--primary-blue); z-index: 9999; width: 0%; transition: width 0.1s; }
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-        /* Sticky Navigation */
-        nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-soft); position: sticky; top: 0; z-index: 1000; height: 75px; display: flex; align-items: center; }
-        .nav-inner { max-width: var(--max-width); margin: 0 auto; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
-        .logo { font-family: 'Nanum+Myeongjo', serif; font-size: 1.6rem; font-weight: 800; color: var(--deep-slate); text-decoration: none; letter-spacing: -1px; }
-        .menu { display: flex; gap: 2.5rem; }
-        .menu a { text-decoration: none; color: var(--text-body); font-weight: 600; font-size: 0.95rem; transition: color 0.2s; }
-        .menu a:hover { color: var(--primary-blue); }
+        .logo { font-weight: 800; font-size: 1.2rem; color: var(--primary); text-decoration: none; letter-spacing: -0.5px; }
+        .nav-links a { margin-left: 2rem; text-decoration: none; color: var(--text-main); font-size: 0.9rem; font-weight: 600; transition: 0.3s; cursor: pointer; }
+        .nav-links a:hover { color: var(--accent); }
 
-        /* Hero Section */
-        .hero { padding: 10rem 2rem; text-align: center; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border-bottom: 1px solid var(--border-soft); }
-        .hero-label { display: inline-block; background: var(--primary-blue); color: white; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 800; font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 2rem; }
-        .hero h1 { font-family: 'Nanum Myeongjo', serif; font-size: 4rem; line-height: 1.2; margin-bottom: 2rem; letter-spacing: -2px; }
-        .hero p { max-width: 800px; margin: 0 auto; font-size: 1.4rem; color: var(--text-light); font-weight: 300; }
+        /* Progress Bar */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 1001;
+            transition: width 0.1s;
+        }
 
-        /* Content Layout */
-        .container { max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: 1fr 340px; gap: 4rem; padding: 6rem 2rem; }
-        
-        main { min-width: 0; }
-        .article-header { margin-bottom: 3rem; }
-        .article-title { font-family: 'Nanum Myeongjo', serif; font-size: 2.8rem; line-height: 1.3; margin-bottom: 1.5rem; }
-        .article-image { width: 100%; height: 500px; object-fit: cover; border-radius: 24px; margin-bottom: 3rem; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
-
-        .article-body h2 { font-size: 2rem; margin: 4rem 0 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--deep-slate); }
-        .article-body h3 { font-size: 1.5rem; margin: 2.5rem 0 1rem; color: var(--primary-blue); }
-        .article-body p { font-size: 1.2rem; margin-bottom: 2rem; text-align: justify; color: var(--text-body); }
-
-        /* Pro Insight Box */
-        .insight-box { background: var(--bg-offwhite); border-radius: 20px; padding: 3rem; margin: 3rem 0; border: 1px solid var(--border-soft); }
-        .insight-box h4 { font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
-        .insight-box ul { list-style: none; }
-        .insight-box li { margin-bottom: 1rem; padding-left: 1.5rem; position: relative; font-size: 1.1rem; }
-        .insight-box li::before { content: '✓'; position: absolute; left: 0; color: var(--primary-blue); font-weight: 900; }
-
-        /* Sidebar Widgets */
-        aside { position: sticky; top: 110px; align-self: start; }
-        .widget { background: #fff; border: 1px solid var(--border-soft); padding: 2rem; border-radius: 20px; margin-bottom: 2.5rem; }
-        .widget h5 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.5rem; }
-        
-        .author-card { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-        .author-img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; }
-
-        .ad-space { background: var(--bg-offwhite); border: 1px dashed var(--border-soft); border-radius: 16px; min-height: 250px; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.75rem; margin: 2rem 0; }
-
-        /* Footer */
-        footer { background: var(--deep-slate); color: #94a3b8; padding: 8rem 2rem; margin-top: 10rem; }
-        .footer-grid { max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 4rem; }
-        .footer-logo { font-family: 'Nanum Myeongjo', serif; color: #fff; font-size: 1.5rem; margin-bottom: 1.5rem; display: block; }
-        .footer-col h6 { color: #fff; font-size: 1rem; margin-bottom: 1.5rem; }
-        .footer-col a { color: #94a3b8; text-decoration: none; display: block; margin-bottom: 0.8rem; transition: 0.2s; }
-        .footer-col a:hover { color: #fff; }
-
-        /* Dynamic Pages */
-        .page-view { display: none; }
+        /* Layout */
+        .container { max-width: 850px; margin: 100px auto; padding: 0 20px; }
+        .page-view { display: none; animation: fadeIn 0.5s ease; }
         .page-view.active { display: block; }
 
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; }
-            aside { display: none; }
-            .hero h1 { font-size: 2.8rem; }
-            .article-image { height: 300px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Typography */
+        h1 { font-size: 3.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; margin-bottom: 2rem; letter-spacing: -2px; }
+        h2 { font-size: 2rem; margin: 3rem 0 1.5rem; color: var(--primary); border-left: 5px solid var(--accent); padding-left: 15px; }
+        h3 { font-size: 1.5rem; margin: 2rem 0 1rem; color: var(--primary); }
+        p { margin-bottom: 1.5rem; font-size: 1.1rem; }
+        .highlight { color: var(--accent); font-weight: 700; }
+
+        /* Components */
+        .hero-tag { display: inline-block; background: #dbeafe; color: var(--accent); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; margin-bottom: 1rem; }
+        .card { background: var(--white); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin: 2rem 0; }
+        .img-box { width: 100%; border-radius: 15px; overflow: hidden; margin: 2rem 0; }
+        .img-box img { width: 100%; height: auto; display: block; }
+        
+        .cta-button {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: 0.3s;
+            margin-top: 1rem;
+        }
+        .cta-button:hover { background: var(--accent); transform: translateY(-2px); }
+
+        /* Footer */
+        footer { background: var(--primary); color: #94a3b8; padding: 4rem 5%; margin-top: 5rem; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 3rem; }
+        .footer-logo { color: white; font-weight: 800; margin-bottom: 1rem; display: block; }
+        .footer-links h6 { color: white; margin-bottom: 1.2rem; font-size: 1rem; }
+        .footer-links ul { list-style: none; }
+        .footer-links li { margin-bottom: 0.5rem; }
+        .footer-links a { color: #94a3b8; text-decoration: none; font-size: 0.9rem; }
+        .copyright { border-top: 1px solid #1e293b; margin-top: 3rem; padding-top: 2rem; font-size: 0.8rem; text-align: center; }
+
+        /* Ad Space */
+        .ad-placeholder { background: #f1f5f9; border: 2px dashed #cbd5e1; padding: 2rem; text-align: center; margin: 2rem 0; border-radius: 10px; font-size: 0.8rem; color: #64748b; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
         }
     </style>
 </head>
 <body>
 
-<div id="progress-bar"></div>
+    <div id="progress-bar"></div>
 
-<nav>
-    <div class="nav-inner">
+    <nav>
         <a href="#" class="logo" onclick="showPage('home')">AI ARBITRAGE LAB</a>
-        <div class="menu">
-            <a href="#" onclick="showPage('home')">Insights</a>
-            <a href="#" onclick="showPage('about')">Lab Mission</a>
-            <a href="#" onclick="showPage('privacy')">Privacy Policy</a>
-            <a href="#" onclick="showPage('contact')">Consulting</a>
+        <div class="nav-links">
+            <a onclick="showPage('home')">Insights</a>
+            <a onclick="showPage('mission')">Lab Mission</a>
+            <a onclick="showPage('privacy')">Privacy Policy</a>
+            <a onclick="showPage('consulting')">Consulting</a>
         </div>
-    </div>
-</nav>
-
-<div id="home-view" class="page-view active">
-    <header class="hero">
-        <span class="hero-label">CONTENT ENGINEERING</span>
-        <h1>AI는 정보를 만들고,<br>우리는 가치를 설계한다</h1>
-        <p>단순한 텍스트 생성을 넘어 사용자의 문제를 해결하는 '고품질 콘텐츠'의 본질. 500개 이상의 애드센스 프로젝트 데이터를 바탕으로 한 수익화 로드맵을 공개합니다.</p>
-    </header>
+    </nav>
 
     <div class="container">
-        <main>
-            <article class="article-body">
-                <header class="article-header">
-                    <h2 class="article-title">AI로 쓴 글은 왜 수익이 나지 않을까?<br>크롤러가 아닌 '사람'에게 집중해야 하는 이유</h2>
-                    <img src="https://images.unsplash.com/photo-1675557009875-436f2978a6fa?auto=format&fit=crop&q=80&w=1400" alt="Deep Technical Analysis" class="article-image">
-                </header>
-                
-                <p>
-                    많은 블로거들이 AI에게 "수익성 좋은 글을 써줘"라고 명령합니다. 하지만 그 결과물은 대개 뻔한 정보의 나열로 끝납니다. 구글 애드센스 가이드라인은 명확합니다. <strong>"사용자에게 독창적이고 가치 있는 정보를 제공하는가?"</strong> 봇이 생산한 의미 없는 반복은 이제 더 이상 수익이 되지 않습니다.
-                </p>
+        <!-- Home View -->
+        <div id="home-view" class="page-view active">
+            <span class="hero-tag">CONTENT ENGINEERING</span>
+            <h1>AI는 정보를 만들고,<br>우리는 가치를 설계한다</h1>
+            <p class="lead">단순한 텍스트 생성을 넘어 사용자의 문제를 해결하는 '고품질 콘텐츠'의 본질. 500개 이상의 애드센스 프로젝트 데이터를 바탕으로 한 수익화 로드맵을 공개합니다.</p>
 
-                <h2>1. 문제 해결형 콘텐츠: 검색 의도를 파악하라</h2>
-                <p>
-                    검색창에 입력되는 모든 키워드는 하나의 '질문'입니다. 사용자는 정보를 찾기 위해서가 아니라, 자신의 고충을 해결하기 위해 당신의 사이트를 방문합니다.
-                </p>
-                <div class="insight-box">
-                    <h4>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-blue)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                        Case Study: 실무 엑셀 트러블슈팅
-                    </h4>
-                    <ul>
-                        <li><strong>상황:</strong> 대규모 데이터 시트에서 수식이 꼬여 결과값이 나오지 않는 긴박한 보고 상황.</li>
-                        <li><strong>솔루션:</strong> AI를 단순 작가가 아닌 '디버깅 파트너'로 활용. 오류 코드의 맥락을 분석하고 최적화된 배열 수식 제안.</li>
-                        <li><strong>수치적 가치:</strong> 자료 대조 시간 3시간에서 **5분으로 단축**. 사용자는 이 '시간 단축'에 대해 높은 가치를 부여합니다.</li>
-                    </ul>
-                </div>
-
-                <div class="ad-space">
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-8168577666174828"
-                         data-ad-slot="YOUR_AD_SLOT"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-                </div>
-
-                <h2>2. 시간 절약형 콘텐츠: 큐레이션의 힘</h2>
-                <p>
-                    현대인은 바쁩니다. 50페이지 분량의 해외 기술 문서를 대신 읽고 5분 요약본을 제공하는 사이트가 있다면, 사용자는 그곳을 즐겨찾기 할 것입니다. 
-                </p>
-                <div class="insight-box">
-                    <h4>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-blue)"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-                        Case Study: 영문 리포트 자동 분석
-                    </h4>
-                    <ul>
-                        <li><strong>상황:</strong> 최신 시장 트렌드 파악을 위해 매주 10개 이상의 영문 자료를 읽어야 하는 마케터.</li>
-                        <li><strong>솔루션:</strong> AI 워크플로우를 통해 데이터 핵심 지표 추출 및 시각화 리포트 생성.</li>
-                        <li><strong>결과:</strong> 정보 습득 효율 **85% 향상**. 남는 시간에 더 창의적인 기획이 가능해집니다.</li>
-                    </ul>
-                </div>
-
-                <h2>3. 신뢰를 기반으로 한 수익 모델 설계</h2>
-                <p>
-                    수익은 신뢰의 결과물입니다. 사용자가 당신의 정보로 이득을 얻었을 때, 자연스럽게 광고를 클릭하거나 추천하는 제품에 관심을 갖게 됩니다. 
-                </p>
-                <div class="insight-box" style="background: var(--deep-slate); color: #fff;">
-                    <h4 style="color: #fff;">🚀 애드센스 고품질 사이트 자가 진단</h4>
-                    <ol style="padding-left: 1.5rem; margin-top: 1rem;">
-                        <li style="margin-bottom: 1rem;">다른 곳에서 볼 수 없는 **나만의 관점**이 포함되어 있는가?</li>
-                        <li style="margin-bottom: 1rem;">독자가 글을 읽고 나서 **즉시 실행할 수 있는 행동 지침**이 있는가?</li>
-                        <li>사이트의 **운영 주체와 연락처**가 투명하게 공개되어 있는가?</li>
-                    </ol>
-                </div>
-
-                <!-- Disqus Integration -->
-                <div id="disqus-area" style="margin-top: 5rem; padding-top: 3rem; border-top: 1px solid var(--border-soft);">
-                    <div id="disqus_thread"></div>
-                    <script>
-                        (function() {
-                        var d = document, s = d.createElement('script');
-                        s.src = 'https://enjoyable.disqus.com/embed.js';
-                        s.setAttribute('data-timestamp', +new Date());
-                        (d.head || d.body).appendChild(s);
-                        })();
-                    </script>
-                </div>
-            </article>
-        </main>
-
-        <aside>
-            <div class="widget">
-                <h5>Expert Profile</h5>
-                <div class="author-card">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200" alt="Strategist" class="author-img">
-                    <div>
-                        <p style="font-weight: 800; font-size: 1.1rem;">David K.</p>
-                        <p style="font-size: 0.8rem; color: var(--text-light);">Content Architect</p>
-                    </div>
-                </div>
-                <p style="font-size: 0.95rem; color: var(--text-body);">수익형 미디어 자문가. 알고리즘 데이터 분석을 통해 지속 가능한 수익형 콘텐츠 구조를 설계합니다.</p>
+            <div class="img-box">
+                <img src="https://images.unsplash.com/photo-1675557009875-436f2978a6fa?auto=format&fit=crop&q=80&w=1400" alt="Deep Technical Analysis">
             </div>
 
-            <div class="ad-space">PREMIUM ADVERTISING</div>
+            <h2>AI로 쓴 글은 왜 수익이 나지 않을까?</h2>
+            <p>크롤러가 아닌 '사람'에게 집중해야 하는 이유</p>
+            <p>많은 블로거들이 AI에게 "수익성 좋은 글을 써줘"라고 명령합니다. 하지만 그 결과물은 대개 뻔한 정보의 나열로 끝납니다. 구글 애드센스 가이드라인은 명확합니다. <strong>"사용자에게 독창적이고 가치 있는 정보를 제공하는가?"</strong> 봇이 생산한 의미 없는 반복은 이제 더 이상 수익이 되지 않습니다.</p>
 
-            <div class="widget">
-                <h5>Lab Guides</h5>
-                <ul style="list-style: none; font-size: 0.95rem;">
-                    <li style="margin-bottom: 1rem;"><a href="#" style="text-decoration:none; color:var(--deep-slate); font-weight: 600;">애드센스 승인을 부르는 E-E-A-T 원칙</a></li>
-                    <li style="margin-bottom: 1rem;"><a href="#" style="text-decoration:none; color:var(--deep-slate); font-weight: 600;">체류 시간을 늘리는 스토리텔링 기법</a></li>
-                    <li><a href="#" style="text-decoration:none; color:var(--deep-slate); font-weight: 600;">고단가 키워드 발굴의 알고리즘</a></li>
+            <div class="ad-placeholder">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+                <!-- Horizontal Ad -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                     data-ad-slot="XXXXXXXXXX"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+                <p>PREMIUM ADVERTISING</p>
+            </div>
+
+            <h2>1. 문제 해결형 콘텐츠: 검색 의도를 파악하라</h2>
+            <p>검색창에 입력되는 모든 키워드는 하나의 '질문'입니다. 사용자는 정보를 찾기 위해서가 아니라, 자신의 고충을 해결하기 위해 당신의 사이트를 방문합니다.</p>
+            
+            <div class="card">
+                <h3>Case Study: 실무 엑셀 트러블슈팅</h3>
+                <ul>
+                    <li><strong>상황:</strong> 대규모 데이터 시트에서 수식이 꼬여 결과값이 나오지 않는 긴박한 보고 상황.</li>
+                    <li><strong>솔루션:</strong> AI를 단순 작가가 아닌 '디버깅 파트너'로 활용. 오류 코드의 맥락을 분석하고 최적화된 배열 수식 제안.</li>
+                    <li><strong>수치적 가치:</strong> 자료 대조 시간 3시간에서 <span class="highlight">5분으로 단축</span>. 사용자는 이 '시간 단축'에 대해 높은 가치를 부여합니다.</li>
                 </ul>
             </div>
-        </aside>
-    </div>
-</div>
 
-<!-- Legal & Support Pages -->
-<div id="privacy-view" class="page-view container" style="max-width: 800px;">
-    <article class="article-body">
-        <h2>개인정보 처리방침 (Privacy Policy)</h2>
-        <p>AI Arbitrage Lab은 사용자의 개인정보를 소중히 여기며, 관련 법령을 준수합니다.</p>
-        <h3>1. 쿠키 및 광고 서비스</h3>
-        <p>본 사이트는 Google AdSense 광고 서비스를 이용합니다. Google을 포함한 제3자 제공업체는 사용자의 이전 방문 기록을 바탕으로 광고를 게재하기 위해 쿠키를 사용합니다.</p>
-        <p>사용자는 Google 광고 설정에서 맞춤 설정 광고를 해제하거나, www.aboutads.info에서 제3자 제공업체의 쿠키 사용을 중단할 수 있습니다.</p>
-        <h3>2. 데이터 분석</h3>
-        <p>방문자 통계 분석을 위해 비식별화된 로그 데이터를 수집할 수 있으며, 이는 오직 사이트 품질 개선 목적으로만 사용됩니다.</p>
-    </article>
-</div>
+            <h2>2. 시간 절약형 콘텐츠: 큐레이션의 힘</h2>
+            <p>현대인은 바쁩니다. 50페이지 분량의 해외 기술 문서를 대신 읽고 5분 요약본을 제공하는 사이트가 있다면, 사용자는 그곳을 즐겨찾기 할 것입니다.</p>
 
-<div id="about-view" class="page-view container" style="max-width: 800px;">
-    <article class="article-body">
-        <h2>Lab Mission</h2>
-        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=1200" alt="Our Mission" style="width:100%; border-radius:16px; margin-bottom: 2rem;">
-        <p>우리는 기술이 인간의 창의성을 대체하는 것이 아니라, 인간이 더 가치 있는 일에 집중할 수 있도록 돕는 도구가 되어야 한다고 믿습니다.</p>
-        <p>AI Arbitrage Lab은 수많은 정보 중 '진짜 가치'를 선별하고 엔지니어링하여, 지속 가능한 지식 수익 생태계를 구축하는 데 기여합니다.</p>
-    </article>
-</div>
+            <div class="card">
+                <h3>Case Study: 영문 리포트 자동 분석</h3>
+                <ul>
+                    <li><strong>상황:</strong> 최신 시장 트렌드 파악을 위해 매주 10개 이상의 영문 자료를 읽어야 하는 마케터.</li>
+                    <li><strong>솔루션:</strong> AI 워크플로우를 통해 데이터 핵심 지표 추출 및 시각화 리포트 생성.</li>
+                    <li><strong>결과:</strong> 정보 습득 효율 <span class="highlight">85% 향상</span>. 남는 시간에 더 창의적인 기획이 가능해집니다.</li>
+                </ul>
+            </div>
 
-<div id="contact-view" class="page-view container" style="max-width: 800px;">
-    <article class="article-body">
-        <h2>전략 컨설팅 문의</h2>
-        <p>콘텐츠 수익화 로드맵 구축 및 기업 블로그 운영 최적화 상담을 원하시면 아래 내용을 남겨주세요.</p>
-        <form action="https://formspree.io/f/xrerwdrj" method="POST" style="margin-top: 2rem;">
-            <input type="text" name="name" placeholder="성함" required style="width:100%; padding:1rem; margin-bottom:1rem; border:1px solid var(--border-soft); border-radius:12px;">
-            <input type="email" name="_replyto" placeholder="이메일 주소" required style="width:100%; padding:1rem; margin-bottom:1rem; border:1px solid var(--border-soft); border-radius:12px;">
-            <textarea name="message" rows="6" placeholder="문의 내용 (수익화 현황, 목표 등)" required style="width:100%; padding:1rem; margin-bottom:1rem; border:1px solid var(--border-soft); border-radius:12px;"></textarea>
-            <button type="submit" style="width:100%; padding:1.2rem; background:var(--deep-slate); color:white; border:none; border-radius:12px; font-weight:800; cursor:pointer;">전략 문의 보내기</button>
-        </form>
-    </article>
-</div>
+            <h2>3. 신뢰를 기반으로 한 수익 모델 설계</h2>
+            <p>수익은 신뢰의 결과물입니다. 사용자가 당신의 정보로 이득을 얻었을 때, 자연스럽게 광고를 클릭하거나 추천하는 제품에 관심을 갖게 됩니다.</p>
 
-<footer>
-    <div class="footer-grid">
-        <div class="footer-col">
-            <span class="footer-logo">AI ARBITRAGE LAB</span>
-            <p>데이터와 마케팅 통찰력을 결합한 프리미엄 지식 미디어. 우리는 지속 가능한 성장을 위한 최적화의 해답을 찾습니다.</p>
+            <div class="card" style="background: #f0f9ff; border: 1px solid #bae6fd;">
+                <h3>🚀 애드센스 고품질 사이트 자가 진단</h3>
+                <p>1. 다른 곳에서 볼 수 없는 <strong>나만의 관점</strong>이 포함되어 있는가?<br>
+                2. 독자가 글을 읽고 나서 <strong>즉시 실행할 수 있는 행동 지침</strong>이 있는가?<br>
+                3. 사이트의 <strong>운영 주체와 연락처</strong>가 투명하게 공개되어 있는가?</p>
+            </div>
+
+            <div id="disqus_thread" style="margin-top: 4rem;"></div>
+            <script>
+                (function() {
+                var d = document, s = d.createElement('script');
+                s.src = 'https://enjoyable.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+                })();
+            </script>
+
+            <div class="card" style="display: flex; align-items: center; gap: 20px;">
+                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200" alt="Strategist" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                <div>
+                    <h4 style="color: var(--primary)">David K. Content Architect</h4>
+                    <p style="font-size: 0.9rem; margin: 0;">수익형 미디어 자문가. 알고리즘 데이터 분석을 통해 지속 가능한 수익형 콘텐츠 구조를 설계합니다.</p>
+                </div>
+            </div>
         </div>
-        <div class="footer-col">
-            <h6>Information</h6>
-            <a href="#" onclick="showPage('home')">Insights</a>
-            <a href="#" onclick="showPage('about')">Our Mission</a>
-            <a href="#" onclick="showPage('privacy')">Privacy Policy</a>
+
+        <!-- Privacy View -->
+        <div id="privacy-view" class="page-view">
+            <h1>개인정보 처리방침</h1>
+            <p>AI Arbitrage Lab은 사용자의 개인정보를 소중히 여기며, 관련 법령을 준수합니다.</p>
+            
+            <h2>1. 쿠키 및 광고 서비스</h2>
+            <p>본 사이트는 Google AdSense 광고 서비스를 이용합니다. Google을 포함한 제3자 제공업체는 사용자의 이전 방문 기록을 바탕으로 광고를 게재하기 위해 쿠키를 사용합니다. 사용자는 Google 광고 설정에서 맞춤 설정 광고를 해제하거나, www.aboutads.info에서 제3자 제공업체의 쿠키 사용을 중단할 수 있습니다.</p>
+
+            <h2>2. 데이터 분석</h2>
+            <p>방문자 통계 분석을 위해 비식별화된 로그 데이터를 수집할 수 있으며, 이는 오직 사이트 품질 개선 목적으로만 사용됩니다.</p>
         </div>
-        <div class="footer-col">
-            <h6>Connect</h6>
-            <a href="#" onclick="showPage('contact')">Consulting</a>
-            <p style="margin-top:1rem; font-size: 0.8rem;">Email: bunghoons@gmail.com</p>
+
+        <!-- Mission View -->
+        <div id="mission-view" class="page-view">
+            <h1>Lab Mission</h1>
+            <div class="img-box">
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=1200" alt="Our Mission">
+            </div>
+            <p>우리는 기술이 인간의 창의성을 대체하는 것이 아니라, 인간이 더 가치 있는 일에 집중할 수 있도록 돕는 도구가 되어야 한다고 믿습니다.</p>
+            <p>AI Arbitrage Lab은 수많은 정보 중 '진짜 가치'를 선별하고 엔지니어링하여, 지속 가능한 지식 수익 생태계를 구축하는 데 기여합니다.</p>
+        </div>
+
+        <!-- Consulting View -->
+        <div id="consulting-view" class="page-view">
+            <h1>전략 컨설팅 문의</h1>
+            <p>콘텐츠 수익화 로드맵 구축 및 기업 블로그 운영 최적화 상담을 원하시면 아래 내용을 남겨주세요.</p>
+            <div class="card">
+                <form action="#" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+                    <input type="text" placeholder="성함 / 기업명" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 5px;">
+                    <input type="email" placeholder="이메일 주소" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 5px;">
+                    <textarea placeholder="문의 내용" rows="5" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 5px;"></textarea>
+                    <button type="submit" class="cta-button" style="border: none; cursor: pointer;">전략 문의 보내기</button>
+                </form>
+            </div>
         </div>
     </div>
-    <div style="text-align: center; margin-top: 5rem; border-top: 1px solid #1e293b; padding-top: 2rem; font-size: 0.8rem;">
-        &copy; 2026 AI Content Arbitrage Lab. All technical contents are verified by experts.
-    </div>
-</footer>
 
-<script>
-    function showPage(pageId) {
-        document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
-        document.getElementById(pageId + '-view').classList.add('active');
-        window.scrollTo(0, 0);
-    }
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <span class="footer-logo">AI ARBITRAGE LAB</span>
+                <p style="font-size: 0.9rem;">데이터와 마케팅 통찰력을 결합한 프리미엄 지식 미디어. 우리는 지속 가능한 성장을 위한 최적화의 해답을 찾습니다.</p>
+            </div>
+            <div class="footer-links">
+                <h6>Information</h6>
+                <ul>
+                    <li><a onclick="showPage('home')">Insights</a></li>
+                    <li><a onclick="showPage('mission')">Our Mission</a></li>
+                    <li><a onclick="showPage('privacy')">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h6>Connect</h6>
+                <ul>
+                    <li><a onclick="showPage('consulting')">Consulting</a></li>
+                    <li>Email: bunghoons@gmail.com</li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            © 2026 AI Content Arbitrage Lab. All technical contents are verified by experts.
+        </div>
+    </footer>
 
-    window.onscroll = function() {
-        let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-        let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        document.getElementById("progress-bar").style.width = (winScroll / height) * 100 + "%";
-    };
-</script>
+    <script>
+        function showPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+            document.getElementById(pageId + '-view').classList.add('active');
+            window.scrollTo(0, 0);
+        }
 
+        window.onscroll = function() {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = (winScroll / height) * 100 + "%";
+        };
+    </script>
 </body>
 </html>
